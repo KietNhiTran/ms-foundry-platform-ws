@@ -14,9 +14,17 @@ build/
 dist/
 *.egg-info/
 
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.DotSettings.user
+
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Editor and OS artifacts
 .vscode/
