@@ -61,8 +61,8 @@ These are the most critical strategies for testing agent security.
 
 | Strategy | Description | Contoso Relevance |
 |----------|-------------|-------------------|
-| **Jailbreak** (UPIA) | Injects crafted prompts to bypass AI safeguards via direct user input | Tests whether a user can directly ask the Contoso Estimator to reveal confidential rates |
-| **Indirect Jailbreak** (XPIA) | Injects attack prompts in tool outputs or returned context | Tests whether malicious instructions in uploaded specification documents can compromise the agent |
+| **Jailbreak** (UPIA — User Prompt Injection Attack) | Injects crafted prompts to bypass AI safeguards via direct user input | Tests whether a user can directly ask the Contoso Estimator to reveal confidential rates |
+| **Indirect Jailbreak** (XPIA — Cross-domain Prompt Injection Attack) | Injects attack prompts in tool outputs or returned context | Tests whether malicious instructions in uploaded specification documents can compromise the agent |
 | **SuffixAppend** | Appends an adversarial suffix to the prompt | Adds bypass instructions at the end of a normal estimation query |
 
 ---

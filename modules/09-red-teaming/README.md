@@ -135,7 +135,7 @@ Key strategies relevant to the Contoso Estimator scenario:
 #### Step 1 — Navigate to Red Teaming
 
 1. Open [foundry.microsoft.com](https://foundry.microsoft.com) → select your project
-2. Navigate to **Evaluations** → **AI Red Teaming** (or **Safety evaluations**)
+2. Navigate to **Evaluations** → **AI Red Teaming** (label may appear as **Safety evaluations** depending on portal version)
 3. Highlight that this is integrated directly into the Foundry development workflow
 
 #### Step 2 — Configure Scan Target
@@ -252,7 +252,7 @@ flowchart TD
 ## Known Limitations
 
 - Red teaming runs use **synthetic data** — not representative of real-world data distributions
-- Mock tools retrieve synthetic data only; they don't currently support mocking behaviors
+- Mock tools retrieve synthetic data only; they don't currently support mocking tool behavior patterns or side effects (e.g., simulating a tool that modifies data rather than just reading it)
 - Attack Success Rate uses generative models for evaluation and can be **non-deterministic** — always review results before taking mitigation actions
 - Cloud red teaming is currently available in: **East US 2, France Central, Sweden Central, Switzerland West, US North Central**
 - Agent-specific risk categories require **cloud red teaming** (not available locally)
