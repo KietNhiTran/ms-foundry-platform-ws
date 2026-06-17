@@ -26,7 +26,7 @@ Complete these steps **before** presenting this module.
 | # | Task | How | Verify |
 |---|------|-----|--------|
 | 1 | Foundry resource + project provisioned | Use existing resource from Module 1 | Project visible in [Foundry portal](https://ai.azure.com) |
-| 2 | Contoso Estimator agent deployed and tested | Built in Modules 2–9 with active version selected | Agent responds correctly in Foundry playground |
+| 2 | Contoso Estimator Advisor agent deployed and tested | Built in Modules 2–9 with active version selected | Agent responds correctly in Foundry playground |
 | 3 | Application Insights connected to project | **Project Settings** → **Tracing** → select or create App Insights resource | Traces appear under **Operate** → **Assets** → agent **Traces** tab |
 | 4 | AI Gateway configured | **Project Settings** → **AI Gateway** → enable API Management gateway | Gateway status shows **Enabled** |
 | 5 | RBAC roles assigned | Ensure presenter has **Foundry User** + **Foundry Account Owner** on subscription | `az role assignment list --assignee <upn>` shows both roles |
@@ -292,6 +292,8 @@ For advanced scenarios, select **Download & customize** instead of direct publis
 | **Prompt agent** | ✅ | ✅ | ✅ |
 | **Hosted agent** | ✅ | ✅ | Supported using A365 SDK |
 | **Workflow agent** | ✅ | ❌ | ❌ |
+
+> **Note:** Workflow agents appear in the Agent 365 registry but do not currently support autopilot publishing or activity data collection. For observability of workflow agents, use Foundry Control Plane traces and Application Insights directly.
 
 ### Connecting External Agents to Agent 365
 
