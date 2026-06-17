@@ -1,15 +1,42 @@
 # Microsoft Foundry AI Platform Workshop
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Last Updated:** June 2026  
 **Format:** Led Demo (Presenter demonstrates, audience observes)  
-**Fictional Company:** Contoso Corporation  
+**Fictional Company:** Contoso Infrastructure  
+**Scenario Agent:** Contoso Estimator Advisor  
+**Demo Language:** .NET (C#)  
 
 ---
 
 ## Workshop Overview
 
-A comprehensive enablement workshop covering the **Microsoft Foundry** platform — the unified Azure platform-as-a-service for enterprise AI operations, model building, and agent development. This workshop uses **Contoso Corporation** as a fictional enterprise scenario to demonstrate real-world patterns.
+A comprehensive enablement workshop covering the **Microsoft Foundry** platform — the unified Azure platform-as-a-service for enterprise AI operations, model building, and agent development.
+
+### Scenario: Contoso Estimator Advisor
+
+Throughout this workshop, we progressively build a single agent — the **Contoso Estimator Advisor** — for **Contoso Infrastructure**, a fictional large-scale construction and engineering company. The agent helps estimators prepare project bids by:
+
+- Searching **historical project data** (past bids, final costs, lessons learned)
+- Looking up **rate libraries** (labor, plant, materials by region)
+- Referencing **company policies** (margin guidelines, approval thresholds)
+- Performing **cost calculations** (preliminary estimates from BOQ quantities)
+
+Each module adds a new capability to this agent, building on the previous one:
+
+```
+Module 1: Provision platform        → Foundry resource + GPT-4.1 deployment
+Module 2: Create agent              → File Search (rates + policies) + Code Interpreter
+Module 3: Add enterprise knowledge  → Foundry IQ (project history from Blob Storage)
+Module 4: Add safety guardrails     → Block disclosure of confidential margins
+Module 5: Connect tools             → Code Interpreter for cost calculations
+Module 6: Monitor                   → Trace estimation queries in App Insights
+Module 7: Evaluate                  → Test against labeled estimation Q&A pairs
+Module 8: Govern                    → Token limits per project team via AI Gateway
+Module 9: Red team                  → Test for data leakage of confidential rates
+Module 10: Scale                    → Publish to Teams for bid teams
+Module 11: Pro-code                 → All of the above in .NET SDK code
+```
 
 > **Microsoft Foundry** unifies agents, models, and tools under a single management grouping with built-in enterprise-readiness: tracing, monitoring, evaluations, and customizable enterprise setup configurations.
 >
@@ -33,7 +60,7 @@ This workshop is **modular** — select modules based on audience interest and t
 | **8** | 40 min | AI Gateway & Token Governance | Cost / Governance focus |
 | **9** | 50 min | Safety & Red Teaming | Security / Red team focus |
 | **10** | 50 min | Fleet Management & Agent 365 | Enterprise scale / M365 focus |
-| **11** | 45 min | Pro-Code Development (.NET / Python) | Developer audience |
+| **11** | 45 min | Pro-Code Development (.NET) | Developer audience |
 
 ---
 
@@ -111,10 +138,12 @@ For security, compliance, and platform governance teams.
 - Model Catalog — 1,900+ models (GPT-5, GPT-4.1, Claude, Mistral, Llama, etc.)
 - Resource provisioning and project creation
 - Model deployment (GPT-4.1 recommended for production workloads)
-- RBAC roles: Azure AI User, AI Account Owner, AI Project Manager
+- RBAC roles: Foundry User, Foundry Account Owner, Foundry Project Manager
 - Entra ID authentication and managed identities
 
-**Demo:** Create a Foundry resource, deploy GPT-4.1, run first API call
+**Demo:** Create a Foundry resource, deploy GPT-4.1, run first chat completion in playground
+
+> **Pro-code equivalent:** Module 11, Step 1
 
 **Reference:** [Foundry Overview](https://learn.microsoft.com/azure/ai-studio/what-is-ai-studio) | [Create Foundry Resources](https://learn.microsoft.com/azure/foundry/tutorials/quickstart-create-foundry-resources)
 
@@ -124,18 +153,20 @@ For security, compliance, and platform governance teams.
 
 **Objective:** Create a Prompt Agent using the Foundry portal with tools and memory.
 
-**Scenario:** Build a "Contoso Operations Advisor" agent that answers questions about company policies, performs calculations, and retrieves live data.
+**Scenario:** Build the **Contoso Estimator Advisor** agent that answers questions about rate libraries and company estimation policies, performs cost calculations, and retrieves project data.
 
 **Topics:**
 - Prompt Agent vs Hosted Agent — when to use each
 - Agent configuration: model selection, system instructions, tools
 - System prompt engineering best practices
-- File Search tool — upload documents for RAG
-- Code Interpreter tool — calculations and data analysis
-- Memory — retain context across interactions
+- File Search tool — upload rate library + estimation policy PDFs
+- Code Interpreter tool — cost calculations from BOQ quantities
+- Memory — retain context across estimation conversations
 - Testing and prompt boundary validation
 
-**Demo:** Create `contoso-operations-advisor` agent with File Search + Code Interpreter
+**Demo:** Create `contoso-estimator-advisor` agent with File Search (rate library + policy docs) + Code Interpreter
+
+> **Pro-code equivalent:** Module 11, Step 2
 
 **Reference:** [Agent Service Overview](https://learn.microsoft.com/azure/foundry/agents/concepts/workflow) | [Tool Catalog](https://learn.microsoft.com/azure/foundry/agents/concepts/tool-catalog)
 
@@ -159,7 +190,9 @@ For security, compliance, and platform governance teams.
   - Permission enforcement (ACLs, Purview sensitivity labels)
 - Comparison: File Search vs Azure AI Search vs Foundry IQ
 
-**Demo:** Create AI Search index, connect to agent, test cross-document retrieval
+**Demo:** Create Foundry IQ knowledge base with Blob source (project history PDFs), connect to Contoso Estimator agent, test cross-document retrieval (e.g., "Compare earthworks rates across our last 3 road projects")
+
+> **Pro-code equivalent:** Module 11, Step 3
 
 **Reference:** [What is Foundry IQ?](https://learn.microsoft.com/azure/foundry/agents/concepts/what-is-foundry-iq) | [Connect Knowledge Base](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
 
@@ -179,7 +212,9 @@ For security, compliance, and platform governance teams.
 - Protected materials detection
 - Responsible AI framework: Discover → Protect → Govern
 
-**Demo:** Create guardrail, assign to agent, test with adversarial prompts
+**Demo:** Create guardrail (block disclosure of confidential margin data), assign to Contoso Estimator agent, test with adversarial prompts
+
+> **Pro-code equivalent:** Module 11, Step 4
 
 **Reference:** [Content Safety Overview](https://learn.microsoft.com/azure/ai-services/content-safety/overview) | [Guardrails](https://learn.microsoft.com/azure/foundry/guardrails/guardrails-overview)
 
@@ -201,7 +236,9 @@ For security, compliance, and platform governance teams.
 - **OpenAPI** — custom REST APIs
 - **A2A (Agent-to-Agent)** — multi-agent collaboration
 
-**Demo:** Connect multiple data sources, show tool orchestration
+**Demo:** Add Code Interpreter (cost calculations) + OpenAPI tool (mock pricing API) to Contoso Estimator agent, show multi-tool orchestration
+
+> **Pro-code equivalent:** Module 11, Step 5
 
 **Reference:** [Tool Catalog](https://learn.microsoft.com/azure/foundry/agents/concepts/tool-catalog) | [Fabric IQ](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/fabric-iq)
 
@@ -220,7 +257,9 @@ For security, compliance, and platform governance teams.
 - KQL queries for trace analysis
 - Alerting on anomalies
 
-**Demo:** Connect App Insights, view traces, explore monitoring dashboard
+**Demo:** Connect App Insights to Contoso Estimator agent, view traces of estimation queries, explore monitoring dashboard
+
+> **Pro-code equivalent:** Module 11, Step 6
 
 **Reference:** [Trace Your Application](https://learn.microsoft.com/azure/foundry/observability/how-to/trace-agent-setup) | [Monitor Agents Dashboard](https://learn.microsoft.com/azure/foundry/observability/how-to/how-to-monitor-agents-dashboard)
 
@@ -240,7 +279,9 @@ For security, compliance, and platform governance teams.
 - CI/CD integration with GitHub Actions
 - Evaluation-driven deployment gates
 
-**Demo:** Create evaluation dataset, run batch eval, set up continuous monitoring
+**Demo:** Create evaluation dataset (estimation Q&A pairs), run batch eval against Contoso Estimator agent, set up continuous monitoring
+
+> **Pro-code equivalent:** Module 11, Step 7
 
 **Reference:** [Evaluate Agentic Workflows](https://learn.microsoft.com/azure/foundry/observability/how-to/evaluate-agent) | [Continuous Evaluation](https://learn.microsoft.com/azure/foundry/observability/how-to/how-to-monitor-agents-dashboard#set-up-continuous-evaluation)
 
@@ -259,7 +300,7 @@ For security, compliance, and platform governance teams.
 - MCP tool governance
 - Usage analytics and reporting
 
-**Demo:** Associate APIM, configure TPM limits, trigger rate limiting
+**Demo:** Associate APIM with Foundry resource, configure TPM limits per project team, trigger rate limiting against Contoso Estimator agent
 
 **Reference:** [AI Gateway](https://learn.microsoft.com/azure/foundry/control-plane/how-to/ai-gateway) | [Plan and Manage Costs](https://learn.microsoft.com/azure/foundry/concepts/manage-costs)
 
@@ -279,7 +320,7 @@ For security, compliance, and platform governance teams.
 - Security posture assessment
 - Remediation workflows
 
-**Demo:** Run red teaming scan, review scorecard, remediate findings
+**Demo:** Run red teaming scan against Contoso Estimator agent (test for confidential rate leakage, prompt injection via uploaded specs), review scorecard, remediate findings
 
 **Reference:** [AI Red Teaming Agent](https://learn.microsoft.com/azure/foundry/concepts/ai-red-teaming-agent) | [Defender for AI](https://learn.microsoft.com/azure/defender-for-cloud/alerts-ai-workloads)
 
@@ -302,29 +343,33 @@ For security, compliance, and platform governance teams.
 - Agent 365 enterprise governance
 - Multi-tenant considerations
 
-**Demo:** Explore fleet dashboard, publish agent to Teams
+**Demo:** Explore fleet dashboard, publish Contoso Estimator agent to Teams for bid teams
 
 **Reference:** [Foundry Control Plane](https://learn.microsoft.com/azure/foundry/control-plane/overview) | [Publish to Copilot](https://learn.microsoft.com/azure/foundry/agents/how-to/publish-copilot)
 
 ---
 
-### Module 11: Pro-Code Development (.NET / Python) (45 min)
+### Module 11: Pro-Code Development (.NET) (45 min)
 
-**Objective:** Build agents programmatically using the Foundry SDK.
+**Objective:** Demonstrate the programmatic equivalent of every portal step from Modules 1-7 using a single .NET solution with progressive, uncommentable steps.
+
+**Concept:** One .NET solution (`ContosoEstimator.sln`) with 8 step files. The presenter uncomments one step at a time in `Program.cs` to show the SDK equivalent of each portal-led module.
 
 **Topics:**
-- SDK overview: `azure-ai-projects` (Python) / `Azure.AI.Projects` (C#)
+- SDK overview: `Azure.AI.Projects` (C#)
 - Authentication: DefaultAzureCredential, managed identities
-- Programmatic agent creation with tools
-- Wiring Azure AI Search, File Search, Code Interpreter in code
+- Step 1: First API call (Module 1)
+- Step 2: Create agent + File Search (Module 2)
+- Step 3: Connect Foundry IQ via MCPTool (Module 3)
+- Step 4: Create guardrail programmatically (Module 4)
+- Step 5: Wire Code Interpreter + OpenAPI tool (Module 5)
+- Step 6: Add OpenTelemetry tracing (Module 6)
+- Step 7: Run batch evaluation (Module 7)
+- Step 8: Full streaming chat UI with ASP.NET Core
 - Responses API vs legacy Assistants API
-- Building a chat UI with SSE streaming
-  - Python: FastAPI + sse-starlette
-  - C#: ASP.NET Core minimal API
-- Evaluation SDK for CI/CD integration
 - Best practices for production deployments
 
-**Demo:** Create agent in code, build streaming chat UI
+**Demo:** Walk through steps 1-3, then jump to Step 8 (streaming chat UI) for the full experience
 
 **Reference:** [SDK Overview](https://learn.microsoft.com/azure/foundry/how-to/develop/sdk-overview) | [Quickstart Code](https://learn.microsoft.com/azure/foundry/quickstarts/get-started-code)
 
@@ -380,9 +425,22 @@ After this workshop, attendees will understand:
 
 This workshop is designed to be customized for specific audiences:
 
-1. **Replace "Contoso"** with customer-specific scenario (if desired)
-2. **Select modules** based on audience role and interest
-3. **Adjust timing** — modules can be compressed or expanded
-4. **Add domain context** — customize system prompts and sample data for the audience's industry
+1. **Replace "Contoso Infrastructure"** with customer-specific scenario (if desired)
+2. **Replace sample data** — swap rate libraries, project history PDFs, and policies for the audience's domain
+3. **Select modules** based on audience role and interest
+4. **Adjust timing** — modules can be compressed or expanded
+5. **Add domain context** — customize system prompts and sample data for the audience's industry
 
 For hands-on versions, convert "Led Demo" to "Hands-On" and ensure attendees have Azure subscription access and local development environments configured.
+
+### Sample Data (Shared Across Modules)
+
+| File | Used In | Purpose |
+|------|---------|---------|
+| `contoso-rate-library.pdf` | Module 2 (File Search) | Labor, plant, materials rates by trade/region |
+| `contoso-estimation-policy.pdf` | Module 2 (File Search) | Margin guidelines, approval matrix |
+| `contoso-m7-motorway-closeout.pdf` | Module 3 (Foundry IQ) | Project history with final costs |
+| `contoso-harbour-bridge-closeout.pdf` | Module 3 (Foundry IQ) | Marine works, cost variance |
+| `contoso-westlink-road-closeout.pdf` | Module 3 (Foundry IQ) | Road construction, subcontractor rates |
+| `contoso-estimator-eval.jsonl` | Module 7 (Evaluation) | Labeled Q&A pairs for batch eval |
+| `adversarial-test-prompts.md` | Module 4 (Safety) | Test cases for guardrail testing |
