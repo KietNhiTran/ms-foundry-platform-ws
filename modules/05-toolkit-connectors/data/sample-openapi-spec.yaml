@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Contoso Infrastructure Pricing API
+  description: >
+    Mock pricing API for Contoso Infrastructure. Returns unit rates
+    for labour, plant, and materials used in construction estimates.
+    This spec is used in the Module 5 demo to connect the Contoso
+    Estimator Advisor agent to an external REST API via the OpenAPI tool
+    in Microsoft Foundry Agent Service.
+  version: "1.0.0"
+  contact:
+    name: Contoso Infrastructure IT
+    email: api-support@contoso-infrastructure.example.com
+
+servers:
+  - url: https://api.contoso-infrastructure.example.com/v1
+    description: Mock pricing API server
+
+paths:
+  /rates:
+    get:
+      operationId: list-rates
+      summary: List available rate categories
+      description: Returns all rate categories (labour, plant, materials) with their subcategories.
+      responses:
+        "200":
+          description: A list of rate categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RateCategory"
+
+  /rates/lookup:
+    get:
+      operationId: lookup-rate
+      summary: Look up a unit rate
+      description: >
+        Returns the current unit rate for a specific trade, resource type,
+        and region. Used by the Contoso Estimator Advisor to retrieve
+        up-to-date pricing for cost calculations.
+      parameters:
+        - name: trade
+          in: query
+          required: true
+          description: "Trade category (e.g., earthworks, concrete, steelwork, electrical)"
+          schema:
+            type: string
+            example: earthworks
+        - name: resource_type
+          in: query
+          required: true
+          description: "Resource type (e.g., labour, plant, materials)"
+          schema:
+            type: string
+            enum:
+              - labour
+              - plant
+              - materials
+        - name: region
+          in: query
+          required: false
+          description: "Region code for regional rate variations (default: national)"
+          schema:
+            type: string
+            example: sydney-metro
+      responses:
+        "200":
+          description: The matching unit rate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnitRate"
+        "404":
+          description: No rate found for the given parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /estimates:
+    post:
+      operationId: create-estimate
+      summary: Create a preliminary cost estimate
+      description: >
+        Accepts a list of bill-of-quantities (BOQ) line items and returns
+        a preliminary cost estimate with unit rates applied. Includes
+        subtotals per trade and a grand total with the configured margin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimateRequest"
+      responses:
+        "200":
+          description: The calculated estimate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstimateResponse"
+        "400":
+          description: Invalid request — missing or malformed line items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    RateCategory:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Category name (e.g., earthworks, concrete)"
+          example: earthworks
+        resource_types:
+          type: array
+          items:
+            type: string
+          description: "Available resource types within this category"
+          example:
+            - labour
+            - plant
+            - materials
+
+    UnitRate:
+      type: object
+      properties:
+        trade:
+          type: string
+          example: earthworks
+        resource_type:
+          type: string
+          example: labour
+        description:
+          type: string
+          example: "General labourer — bulk excavation"
+        unit:
+          type: string
+          example: hr
+        rate:
+          type: number
+          format: double
+          example: 85.50
+        currency:
+          type: string
+          example: AUD
+        region:
+          type: string
+          example: sydney-metro
+        effective_date:
+          type: string
+          format: date
+          example: "2026-01-15"
+
+    EstimateRequest:
+      type: object
+      required:
+        - project_name
+        - line_items
+      properties:
+        project_name:
+          type: string
+          description: Name of the project being estimated
+          example: "Northshore Bridge Approach Road"
+        margin_percent:
+          type: number
+          format: double
+          description: "Margin percentage to apply (default: 12.5)"
+          default: 12.5
+          example: 15.0
+        region:
+          type: string
+          description: "Region for rate lookup (default: national)"
+          example: sydney-metro
+        line_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LineItem"
+
+    LineItem:
+      type: object
+      required:
+        - trade
+        - resource_type
+        - quantity
+      properties:
+        trade:
+          type: string
+          example: earthworks
+        resource_type:
+          type: string
+          example: labour
+        description:
+          type: string
+          example: "Bulk excavation — site cut"
+        quantity:
+          type: number
+          format: double
+          example: 2400
+        unit:
+          type: string
+          example: m3
+
+    EstimateResponse:
+      type: object
+      properties:
+        project_name:
+          type: string
+          example: "Northshore Bridge Approach Road"
+        line_totals:
+          type: array
+          items:
+            type: object
+            properties:
+              trade:
+                type: string
+              resource_type:
+                type: string
+              description:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+              unit_rate:
+                type: number
+              line_total:
+                type: number
+        subtotal:
+          type: number
+          format: double
+          example: 348000.00
+        margin_percent:
+          type: number
+          format: double
+          example: 15.0
+        margin_amount:
+          type: number
+          format: double
+          example: 52200.00
+        grand_total:
+          type: number
+          format: double
+          example: 400200.00
+        currency:
+          type: string
+          example: AUD
+        generated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: NOT_FOUND
+        message:
+          type: string
+          example: "No rate found for trade 'earthworks', resource_type 'labour', region 'perth-metro'"
+
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authenticating requests to the Contoso pricing service
+
+security:
+  - apiKey: []
