@@ -140,7 +140,16 @@ Microsoft Foundry supports guardrails at four intervention points in the agent e
 
 ### Supported Tools for Tool Call / Tool Response Scanning
 
-Tool call and tool response intervention points require moderation support from the tool. Currently supported tools include: Azure AI Search, Azure Functions, OpenAPI, SharePoint Grounding, Fabric Data Agent, Bing Grounding, Bing Custom Search, and Browser Automation.
+Tool call and tool response intervention points require moderation support from the tool. Currently supported tools:
+
+- Azure AI Search
+- Azure Functions
+- OpenAPI
+- SharePoint Grounding
+- Fabric Data Agent
+- Bing Grounding
+- Bing Custom Search
+- Browser Automation
 
 > **Reference:** [Intervention Points](https://learn.microsoft.com/azure/foundry/guardrails/intervention-points)
 
