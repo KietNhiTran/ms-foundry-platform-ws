@@ -90,7 +90,7 @@ In previous modules, the Contoso Estimator Advisor already has:
 
 - **File Search** — rate library and estimation policy PDFs (Module 2)
 - **Code Interpreter** — cost calculations from BOQ quantities (Module 2)
-- **Foundry IQ** — project history knowledge base (Module 3)
+- **Fabric IQ** — project history knowledge base (Module 3)
 
 In this module, we extend the agent with an **OpenAPI tool** that connects to the Contoso Pricing API. This gives the agent access to live, up-to-date unit rates instead of relying solely on the static rate library PDF.
 

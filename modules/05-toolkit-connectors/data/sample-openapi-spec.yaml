@@ -47,7 +47,7 @@ paths:
         - name: trade
           in: query
           required: true
-          description: "Trade category (e.g., earthworks, concrete, steelwork, electrical)"
+          description: "Trade category (e.g., earthworks, concrete, steelwork, electrical, piling)"
           schema:
             type: string
             example: earthworks
@@ -117,7 +117,7 @@ components:
       properties:
         name:
           type: string
-          description: "Category name (e.g., earthworks, concrete)"
+          description: "Category name (e.g., earthworks, concrete, steelwork)"
           example: earthworks
         resource_types:
           type: array
