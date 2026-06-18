@@ -25,7 +25,7 @@ Throughout this workshop, we progressively build a single agent — the **Contos
 Each module adds a new capability to this agent, building on the previous one:
 
 ```
-Module 1: Provision platform        → Foundry resource + GPT-4.1 deployment
+Module 1: Provision platform        → Foundry resource +GPT 5.4 deployment
 Module 2: Create agent              → File Search (rates + policies) + Code Interpreter
 Module 3: Add enterprise knowledge  → Foundry IQ (project history from Blob Storage)
 Module 4: Add safety guardrails     → Block disclosure of confidential margins
@@ -135,13 +135,13 @@ For security, compliance, and platform governance teams.
 - What is Microsoft Foundry — unified platform for agents, models, and tools
 - Evolution from Azure AI Studio → Azure AI Foundry → Microsoft Foundry
 - V2 architecture: Foundry resource → projects (flat resource model)
-- Model Catalog — 1,900+ models (GPT-5, GPT-4.1, Claude, Mistral, Llama, etc.)
+- Model Catalog — 1,900+ models (GPT-5,GPT 5.4, Claude, Mistral, Llama, etc.)
 - Resource provisioning and project creation
-- Model deployment (GPT-4.1 recommended for production workloads)
+- Model deployment (GPT 5.4 recommended for production workloads)
 - RBAC roles: Foundry User, Foundry Account Owner, Foundry Project Manager
 - Entra ID authentication and managed identities
 
-**Demo:** Create a Foundry resource, deploy GPT-4.1, run first chat completion in playground
+**Demo:** Create a Foundry resource, deploy GPT 5.4, run first chat completion in playground
 
 > **Pro-code equivalent:** Module 11, Step 1
 

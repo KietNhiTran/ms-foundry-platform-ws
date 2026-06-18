@@ -29,6 +29,7 @@ This file provides instructions for GitHub Copilot when assisting with workshop 
 
 - **All demo code must be runnable** — Copilot must test and verify code before committing
 - Include **automated tests** in GitHub Actions workflow to prevent regression
+- **Always** search MS docs usng MS leanr MCP to get the latest content and using latest API as possible
 - Each module's `src/` code should include:
   - Unit tests or smoke tests
   - CI workflow that runs on PR and push
