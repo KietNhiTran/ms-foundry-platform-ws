@@ -3,15 +3,20 @@
 /// No portal equivalent — this is how you'd build a production chat client.
 /// 
 /// Demonstrates:
-/// - Conversation management (conversations API)
-/// - Streaming responses via SSE
+/// - Conversation management (ProjectConversationsClient)
+/// - Agent responses via Responses API
 /// - MCP approval handling (for Foundry IQ)
 /// - Interactive console chat loop
 /// </summary>
 
+using Azure.AI.Extensions.OpenAI;
 using Azure.AI.Projects;
+using Azure.AI.Projects.Agents;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 namespace ContosoEstimator.Steps;
 
@@ -25,17 +30,24 @@ public static class Step08_StreamingChat
         var agentName = config["Foundry:AgentName"] ?? "contoso-estimator-advisor";
 
         var credential = new DefaultAzureCredential();
-        var projectClient = new AIProjectClient(projectEndpoint, credential);
-
-        // Get OpenAI client for conversations
-        var openaiClient = projectClient.GetOpenAIClient();
+        var projectClient = new AIProjectClient(
+            endpoint: new Uri(projectEndpoint),
+            tokenProvider: credential);
 
         Console.WriteLine($"Connected to agent: {agentName}");
         Console.WriteLine("Type your estimation questions. Type 'quit' to exit.\n");
 
-        // Create a new conversation
-        var conversation = await openaiClient.Conversations.CreateAsync();
+        // Create a new conversation for multi-turn context
+        var conversationClient = projectClient.ProjectOpenAIClient
+            .GetProjectConversationsClient();
+        ProjectConversation conversation = (await conversationClient.CreateProjectConversationAsync()).Value;
         Console.WriteLine($"Conversation started (ID: {conversation.Id})\n");
+
+        // Get responses client scoped to this agent and conversation
+        var responsesClient = projectClient.ProjectOpenAIClient
+            .GetProjectResponsesClientForAgent(
+                defaultAgent: agentName,
+                defaultConversationId: conversation.Id);
 
         // Interactive chat loop
         while (true)
@@ -46,47 +58,42 @@ public static class Step08_StreamingChat
             if (string.IsNullOrWhiteSpace(input) || input.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 break;
 
-            // Add user message to conversation
-            await openaiClient.Conversations.Items.CreateAsync(
-                conversationId: conversation.Id,
-                items: [new { type = "message", role = "user", content = input }]
-            );
+            // Send user message and get response from agent
+            var responseOptions = new CreateResponseOptions(
+                input,
+                [ResponseItem.CreateUserMessageItem(input)]);
 
-            // Get response from agent
-            var response = await openaiClient.Responses.CreateAsync(
-                conversation: conversation.Id,
-                extraBody: new { agent_reference = new { name = agentName, type = "agent_reference" } },
-                input: ""
-            );
+            var response = (await responsesClient.CreateResponseAsync(responseOptions)).Value;
 
             // Handle MCP approval requests (if Foundry IQ requires approval)
-            if (response.Output?.Any(o => o.Type == "mcp_approval_request") == true)
+            CreateResponseOptions? nextOptions = null;
+            foreach (ResponseItem item in response.OutputItems)
             {
-                var approval = response.Output.First(o => o.Type == "mcp_approval_request");
-                Console.WriteLine($"\n[Knowledge base lookup requested: {approval.ServerLabel}]");
-                Console.WriteLine("Auto-approving...\n");
+                if (item is McpToolCallApprovalRequestItem mcpApproval)
+                {
+                    Console.WriteLine($"\n[Knowledge base lookup requested: {mcpApproval.ServerLabel}]");
+                    Console.WriteLine("Auto-approving...\n");
 
-                // Auto-approve (in production, you might prompt the user)
-                await openaiClient.Conversations.Items.CreateAsync(
-                    conversationId: conversation.Id,
-                    items: [new
+                    // Auto-approve (in production, you might prompt the user)
+                    nextOptions = new CreateResponseOptions()
                     {
-                        type = "mcp_approval_response",
-                        approval_request_id = approval.Id,
-                        approve = true
-                    }]
-                );
+                        PreviousResponseId = response.Id,
+                    };
+                    nextOptions.InputItems.Add(
+                        ResponseItem.CreateMcpApprovalResponseItem(
+                            approvalRequestId: mcpApproval.Id,
+                            approved: true));
+                }
+            }
 
+            if (nextOptions is not null)
+            {
                 // Get actual response after approval
-                response = await openaiClient.Responses.CreateAsync(
-                    conversation: conversation.Id,
-                    extraBody: new { agent_reference = new { name = agentName, type = "agent_reference" } },
-                    input: ""
-                );
+                response = (await responsesClient.CreateResponseAsync(nextOptions)).Value;
             }
 
             // Display response
-            Console.WriteLine($"\nAssistant: {response.OutputText}\n");
+            Console.WriteLine($"\nAssistant: {response.GetOutputText()}\n");
         }
 
         Console.WriteLine("\n✅ Chat session ended.");

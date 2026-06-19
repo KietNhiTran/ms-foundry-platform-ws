@@ -21,7 +21,9 @@ public static class Step07_Evaluation
         var projectEndpoint = config["Foundry:ProjectEndpoint"]!;
 
         var credential = new DefaultAzureCredential();
-        var projectClient = new AIProjectClient(projectEndpoint, credential);
+        var projectClient = new AIProjectClient(
+            endpoint: new Uri(projectEndpoint),
+            tokenProvider: credential);
 
         // Load evaluation dataset
         var evalDatasetPath = config["Evaluation:DatasetPath"] 

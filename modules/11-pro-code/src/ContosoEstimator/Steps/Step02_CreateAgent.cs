@@ -6,10 +6,14 @@
 /// uploads rate library documents, and connects File Search + Code Interpreter.
 /// </summary>
 
+using Azure.AI.Extensions.OpenAI;
 using Azure.AI.Projects;
-using Azure.AI.Projects.Models;
+using Azure.AI.Projects.Agents;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 namespace ContosoEstimator.Steps;
 
@@ -23,7 +27,9 @@ public static class Step02_CreateAgent
         var modelDeployment = config["Foundry:ModelDeployment"]!;
 
         var credential = new DefaultAzureCredential();
-        var projectClient = new AIProjectClient(projectEndpoint, credential);
+        var projectClient = new AIProjectClient(
+            endpoint: new Uri(projectEndpoint),
+            tokenProvider: credential);
 
         // System instructions (same as portal version)
         var instructions = """
@@ -45,22 +51,24 @@ public static class Step02_CreateAgent
             - Do NOT provide competitor pricing information
             """;
 
-        // Create agent with File Search and Code Interpreter
-        var agent = await projectClient.Agents.CreateVersionAsync(
-            agentName: "contoso-estimator-advisor",
-            definition: new PromptAgentDefinition
+        // Create agent with File Search and Code Interpreter tools
+        var agentDefinition = new DeclarativeAgentDefinition(model: modelDeployment)
+        {
+            Instructions = instructions,
+            Tools =
             {
-                Model = modelDeployment,
-                Instructions = instructions,
-                Tools =
-                {
-                    new FileSearchToolDefinition(),
-                    new CodeInterpreterToolDefinition()
-                }
+                ResponseTool.CreateFileSearchTool(vectorStoreIds: []),
+                ResponseTool.CreateCodeInterpreterTool(
+                    new CodeInterpreterToolContainer(
+                        new AutomaticCodeInterpreterToolContainerConfiguration()))
             }
-        );
+        };
 
-        Console.WriteLine($"Agent created: {agent.Value.Name} (version: {agent.Value.Version})");
+        ProjectsAgentVersion agentVersion = await projectClient.AgentAdministrationClient.CreateAgentVersionAsync(
+            agentName: "contoso-estimator-advisor",
+            options: new(agentDefinition));
+
+        Console.WriteLine($"Agent created: {agentVersion.Name} (version: {agentVersion.Version})");
         Console.WriteLine($"Model: {modelDeployment}");
         Console.WriteLine($"Tools: File Search, Code Interpreter");
         Console.WriteLine("\n✅ Step 2 complete — agent created programmatically.\n");

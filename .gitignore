@@ -14,6 +14,10 @@ build/
 dist/
 *.egg-info/
 
+# .NET build outputs (Module 11 pro-code)
+bin/
+obj/
+
 # Environment files
 .env
 .env.*
