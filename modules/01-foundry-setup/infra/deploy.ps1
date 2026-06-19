@@ -26,16 +26,18 @@ az group create --name $ResourceGroupName --location $Location --output none
 
 # Deploy Bicep template
 Write-Host "Deploying Foundry resource + GPT-4.1 model..." -ForegroundColor Yellow
-$result = az deployment group create `
+$output = az deployment group create `
     --resource-group $ResourceGroupName `
     --template-file "$PSScriptRoot\main.bicep" `
     --parameters foundryResourceName=$FoundryResourceName `
-    --output json | ConvertFrom-Json
+    --output json
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Deployment failed!" -ForegroundColor Red
     exit 1
 }
+
+$result = $output | ConvertFrom-Json
 
 $endpoint = $result.properties.outputs.endpoint.value
 Write-Host ""

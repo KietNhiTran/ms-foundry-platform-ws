@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.40.2.10011",
+      "templateHash": "17619321081599941333"
+    }
+  },
+  "parameters": {
+    "foundryResourceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Foundry resource (AI Services account)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for deployment"
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "contoso-estimator",
+      "metadata": {
+        "description": "Name of the Foundry project"
+      }
+    },
+    "modelDeploymentName": {
+      "type": "string",
+      "defaultValue": "gpt-4-1",
+      "metadata": {
+        "description": "GPT-4.1 deployment name"
+      }
+    },
+    "tpmLimit": {
+      "type": "int",
+      "defaultValue": 30000,
+      "metadata": {
+        "description": "Tokens per minute limit for GPT-4.1"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2024-10-01",
+      "name": "[parameters('foundryResourceName')]",
+      "location": "[parameters('location')]",
+      "kind": "AIServices",
+      "sku": {
+        "name": "S0"
+      },
+      "properties": {
+        "customSubDomainName": "[parameters('foundryResourceName')]",
+        "publicNetworkAccess": "Enabled"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2024-10-01",
+      "name": "[format('{0}/{1}', parameters('foundryResourceName'), parameters('modelDeploymentName'))]",
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": "[div(parameters('tpmLimit'), 1000)]"
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "gpt-4.1",
+          "version": "2025-04-14"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryResourceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2024-10-01",
+      "name": "[format('{0}/{1}', parameters('foundryResourceName'), parameters('projectName'))]",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryResourceName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "foundryResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryResourceName'))]"
+    },
+    "projectId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('foundryResourceName'), parameters('projectName'))]"
+    },
+    "endpoint": {
+      "type": "string",
+      "value": "[format('https://{0}.services.ai.azure.com/api/projects/{1}', parameters('foundryResourceName'), parameters('projectName'))]"
+    }
+  }
+}

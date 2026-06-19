@@ -16,7 +16,7 @@ param modelDeploymentName string = 'gpt-4-1'
 param tpmLimit int = 30000
 
 // Foundry Resource (AI Services account)
-resource foundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+resource foundryResource 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: foundryResourceName
   location: location
   kind: 'AIServices'
@@ -26,6 +26,7 @@ resource foundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   properties: {
     customSubDomainName: foundryResourceName
     publicNetworkAccess: 'Enabled'
+    allowProjectManagement: true
   }
   identity: {
     type: 'SystemAssigned'
@@ -33,7 +34,7 @@ resource foundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
 }
 
 // GPT-4.1 Model Deployment
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
   parent: foundryResource
   name: modelDeploymentName
   sku: {
@@ -50,10 +51,13 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
 }
 
 // Foundry Project (child resource)
-resource project 'Microsoft.CognitiveServices/accounts/projects@2024-10-01' = {
+resource project 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
   parent: foundryResource
   name: projectName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {}
 }
 
