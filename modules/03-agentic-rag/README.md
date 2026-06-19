@@ -112,7 +112,7 @@ Agent → Foundry IQ (via portal or MCPTool in SDK)
 3. Connect to your AI Search service (or create new)
 4. Create knowledge base: `contoso-estimator-kb`
 5. Select embedding model: `text-embedding-3-small`
-6. Select chat completions model: `gpt-4-1`
+6. Select chat completions model: `gpt-5-4`
 
 **Step 2: Add Blob Knowledge Source**
 

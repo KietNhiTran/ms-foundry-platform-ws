@@ -9,10 +9,10 @@ param location string = resourceGroup().location
 @description('Name of the Foundry project')
 param projectName string = 'contoso-estimator'
 
-@description('GPT-4.1 deployment name')
-param modelDeploymentName string = 'gpt-4-1'
+@description('GPT-5.4 deployment name')
+param modelDeploymentName string = 'gpt-5-4'
 
-@description('Tokens per minute limit for GPT-4.1')
+@description('Tokens per minute limit for GPT-5.4')
 param tpmLimit int = 30000
 
 // Foundry Resource (AI Services account)
@@ -33,7 +33,7 @@ resource foundryResource 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
 }
 
-// GPT-4.1 Model Deployment
+// GPT-5.4 Model Deployment
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
   parent: foundryResource
   name: modelDeploymentName
@@ -44,7 +44,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4.1'
+      name: 'GPT-5.4'
       version: '2025-04-14'
     }
   }

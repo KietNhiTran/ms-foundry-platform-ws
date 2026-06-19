@@ -25,7 +25,7 @@ Write-Host "Creating resource group..." -ForegroundColor Yellow
 az group create --name $ResourceGroupName --location $Location --output none
 
 # Deploy Bicep template
-Write-Host "Deploying Foundry resource + GPT-4.1 model..." -ForegroundColor Yellow
+Write-Host "Deploying Foundry resource + GPT-5.4 model..." -ForegroundColor Yellow
 $output = az deployment group create `
     --resource-group $ResourceGroupName `
     --template-file "$PSScriptRoot\main.bicep" `
@@ -46,5 +46,5 @@ Write-Host "Project Endpoint: $endpoint"
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  1. Open https://ai.azure.com and verify the project"
-Write-Host "  2. Test GPT-4.1 in the playground"
+Write-Host "  2. Test GPT-5.4 in the playground"
 Write-Host "  3. Proceed to Module 2 to create the agent"

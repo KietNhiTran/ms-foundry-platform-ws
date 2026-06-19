@@ -11,7 +11,7 @@ Usage:
     python setup_agent.py
 
 Prerequisites:
-    - Module 1 deployed (Foundry resource + GPT-4.1 model)
+    - Module 1 deployed (Foundry resource + GPT-5.4 model)
     - Azure CLI logged in (az login) for DefaultAzureCredential
 """
 
@@ -34,7 +34,7 @@ from azure.ai.projects.models import (
 # Configuration
 # ---------------------------------------------------------------------------
 PROJECT_ENDPOINT = os.environ["PROJECT_ENDPOINT"]
-MODEL_DEPLOYMENT_NAME = os.environ.get("MODEL_DEPLOYMENT_NAME", "gpt-4-1")
+MODEL_DEPLOYMENT_NAME = os.environ.get("MODEL_DEPLOYMENT_NAME", "gpt-5-4")
 AGENT_NAME = os.environ.get("AGENT_NAME", "contoso-estimator-advisor")
 
 # Data files from Module 2

@@ -36,7 +36,7 @@ Clients (Estimators)
 └─────────────────────────────────────────┘
       │
       ▼
-Foundry Resource (GPT-4.1 deployment)
+Foundry Resource (GPT-5.4 deployment)
 ```
 
 ### 8.2 Key Governance Controls

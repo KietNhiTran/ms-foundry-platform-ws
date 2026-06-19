@@ -22,7 +22,7 @@ modules/11-pro-code/src/ContosoEstimator/
 ├── ContosoEstimator.csproj
 ├── Program.cs                          # Main — uncomment one step at a time
 ├── Steps/
-│   ├── Step01_FirstApiCall.cs          # Module 1: Call GPT-4.1
+│   ├── Step01_FirstApiCall.cs          # Module 1: Call GPT-5.4
 │   ├── Step02_CreateAgent.cs           # Module 2: Create agent + File Search
 │   ├── Step03_FoundryIQ.cs             # Module 3: MCPTool + KB
 │   ├── Step04_ContentSafety.cs         # Module 4: Guardrails

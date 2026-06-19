@@ -9,7 +9,7 @@
 
 ## Objective
 
-Understand Microsoft Foundry's architecture, provision a Foundry resource and project, and deploy a foundation model (GPT-4.1) ready for agent development.
+Understand Microsoft Foundry's architecture, provision a Foundry resource and project, and deploy a foundation model (GPT-5.4) ready for agent development.
 
 ---
 
@@ -92,7 +92,7 @@ Azure Subscription
 | # | Task | How | Verify |
 |---|------|-----|--------|
 | 1 | Azure subscription active | Azure Portal | Can create resources |
-| 2 | Sufficient quota for GPT-4.1 | Azure Portal → Quotas | TPM available in chosen region |
+| 2 | Sufficient quota for GPT-5.4 | Azure Portal → Quotas | TPM available in chosen region |
 | 3 | New Foundry toggle ON | ai.azure.com | See "New Foundry" in banner |
 
 ### Demo Steps
@@ -104,22 +104,22 @@ Azure Subscription
 3. Enter project name: `contoso-estimator`
 4. Advanced options:
    - Resource group: `rg-contoso-foundry-workshop`
-   - Location: Select available region with GPT-4.1 quota
+   - Location: Select available region with GPT-5.4 quota
 5. Click **Create** — provisions Foundry resource + project automatically
 
-**Step 2: Deploy GPT-4.1**
+**Step 2: Deploy GPT-5.4**
 
 1. Navigate to **Discover** → **Model catalog**
-2. Search for `gpt-4.1`
+2. Search for `GPT-5.4`
 3. Click **Deploy** → Configure:
-   - Deployment name: `gpt-4-1`
+   - Deployment name: `gpt-5-4`
    - Deployment type: Global Standard (best availability)
    - TPM: 30K (sufficient for workshop demos)
 4. Click **Deploy**
 
 **Step 3: Test in Playground**
 
-1. Navigate to **Build** → **Models** → select `gpt-4-1`
+1. Navigate to **Build** → **Models** → select `gpt-5-4`
 2. In playground, send: "What is a bill of quantities in construction?"
 3. Verify response — model is working
 

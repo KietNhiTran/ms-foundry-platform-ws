@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Last Updated:** June 2026  
 **Format:** Led Demo  
-**Prerequisite:** Module 1 complete (Foundry resource + GPT-4.1 deployed)
+**Prerequisite:** Module 1 complete (Foundry resource + GPT-5.4 deployed)
 
 ---
 
@@ -65,7 +65,7 @@ User Query → Agent (LLM) → Reason → Select Tool(s) → Execute → Synthes
 | # | Task | How | Verify |
 |---|------|-----|--------|
 | 1 | Module 1 complete | Foundry resource + project exist | Project visible at ai.azure.com |
-| 2 | GPT-4.1 deployed | Model deployment active | Shows in Build > Models |
+| 2 | GPT-5.4 deployed | Model deployment active | Shows in Build > Models |
 | 3 | Sample data prepared | Rate library + policy PDFs | Files ready to upload |
 
 ### Demo Steps
@@ -77,7 +77,7 @@ User Query → Agent (LLM) → Reason → Select Tool(s) → Execute → Synthes
 3. Click **Create agent**
 4. Configure:
    - Agent name: `contoso-estimator-advisor`
-   - Model: `gpt-4-1` (deployed in Module 1)
+   - Model: `gpt-5-4` (deployed in Module 1)
 
 **Step 2: Write System Instructions**
 

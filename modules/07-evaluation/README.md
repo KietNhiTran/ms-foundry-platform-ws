@@ -45,7 +45,7 @@ Run a batch evaluation against the Contoso Estimator agent using a labeled datas
 
 ### 7.4 LLM-as-Judge Pattern
 
-Foundry uses an LLM (typically GPT-4.1) to evaluate agent responses. The judge LLM:
+Foundry uses an LLM (typically GPT-5.4) to evaluate agent responses. The judge LLM:
 1. Receives the user query, agent response, and ground truth (if available)
 2. Scores based on rubric criteria
 3. Provides reasoning for the score
