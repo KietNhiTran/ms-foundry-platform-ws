@@ -29,10 +29,41 @@ modules/11-pro-code/src/ContosoEstimator/
 │   ├── Step05_AddTools.cs              # Module 5: Code Interpreter + OpenAPI
 │   ├── Step06_Tracing.cs              # Module 6: OpenTelemetry
 │   ├── Step07_Evaluation.cs            # Module 7: Batch eval
-│   └── Step08_StreamingChat.cs         # Bonus: ASP.NET streaming chat
+│   ├── Step07b_ContinuousEvaluation.cs # Module 7: Continuous eval rule
+│   └── Step08_StreamingChat.cs         # Bonus: Console streaming chat
 ├── appsettings.json
 └── .env.example
 ```
+
+### Web Chat UI (Production Pattern)
+
+```
+modules/11-pro-code/src/ContosoEstimator.Web/
+├── ContosoEstimator.Web.csproj         # ASP.NET Core web project
+├── Program.cs                          # Minimal API + SSE streaming backend
+├── appsettings.json                    # Configuration (ProjectEndpoint, AgentName)
+└── wwwroot/
+    ├── index.html                      # Chat UI (single-page app)
+    ├── styles.css                      # Fluent-inspired styling
+    └── chat.js                         # SSE streaming client
+```
+
+**Run the web chat:**
+
+```bash
+cd modules/11-pro-code/src/ContosoEstimator.Web
+# Set your endpoint in appsettings.json or via env var
+export AZURE_AI_PROJECT_ENDPOINT="https://your-project.services.ai.azure.com/api/projects/your-project"
+dotnet run
+# Browse to http://localhost:5050
+```
+
+The web client demonstrates:
+- ASP.NET Core minimal API as a thin proxy to Foundry Agent Service
+- Server-Sent Events (SSE) for real-time token streaming
+- Conversation management (create, multi-turn context)
+- MCP tool approval handling
+- Responsive chat UI with markdown rendering
 
 ---
 
@@ -64,12 +95,12 @@ modules/11-pro-code/src/ContosoEstimator/
 | Step | Portal Module | What the Code Does | Key Class/Method |
 |------|:---:|--------------------|----|
 | 01 | 1 | Call chat completions | `OpenAI()` + `base_url` |
-| 02 | 2 | Create agent + upload files + File Search | `AIProjectClient.Agents.CreateVersion()` |
-| 03 | 3 | Create MCPTool pointing to KB endpoint | `MCPTool` + `RemoteTool` connection |
+| 02 | 2 | Create agent + upload files + File Search | `AIProjectClient.Agents.CreateVersion()` || 02b | 2 | Create memory store + attach Memory Search tool | `MemoryStoreDefaultDefinition` + `MemorySearchPreviewTool` || 03 | 3 | Create MCPTool pointing to KB endpoint | `MCPTool` + `RemoteTool` connection |
 | 04 | 4 | Create guardrail + assign to agent | Content Safety SDK |
 | 05 | 5 | Add Code Interpreter + OpenAPI tool | `ToolDefinition` classes |
 | 06 | 6 | Add OpenTelemetry traces + custom spans | `Azure.Monitor.OpenTelemetry` |
 | 07 | 7 | Load eval dataset + run batch eval | `AIProjectClient.Evaluations` |
+| 07b | 7 | Create continuous evaluation rule | `EvaluationRule` + `EvaluationRuleEventType` |
 | 08 | Bonus | ASP.NET Core minimal API + SSE streaming | Responses API + streaming |
 
 ---

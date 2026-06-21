@@ -83,10 +83,37 @@ def send_prompt(openai_client, conversation_id, agent_name, prompt):
             },
         )
         result["response"] = response
-        result["output_text"] = response.output_text
+
+        # Extract text from response — try multiple approaches
+        # 1. Direct output_text property (works for standard responses)
+        text = response.output_text
+
+        # 2. If output_text is None, try extracting from output items
+        if text is None and response.output:
+            parts = []
+            for item in response.output:
+                # ResponseOutputMessage items have content list
+                if hasattr(item, "content") and item.content:
+                    for content_part in item.content:
+                        if hasattr(content_part, "text"):
+                            parts.append(content_part.text)
+                # Some items have direct text attribute
+                elif hasattr(item, "text"):
+                    parts.append(item.text)
+            if parts:
+                text = "\n".join(parts)
+
+        # 3. If still None, try getting last conversation item
+        if text is None and hasattr(response, "output") and response.output:
+            for item in response.output:
+                item_str = str(item)
+                if len(item_str) > 50:  # Has meaningful content
+                    text = item_str
+
+        result["output_text"] = text
 
         # Check if output indicates filtering (empty or filter message)
-        if not response.output_text or response.output_text.strip() == "":
+        if not text or text.strip() == "":
             result["blocked"] = True
 
     except Exception as e:
@@ -105,10 +132,12 @@ def send_prompt(openai_client, conversation_id, agent_name, prompt):
                 "responsibleaipolicy",
                 "responsible ai policy",
                 "filtered",
-                "blocked",
+                "content_management_policy",
             ]
         ):
             result["blocked"] = True
+
+    return result
 
     return result
 

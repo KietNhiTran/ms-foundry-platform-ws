@@ -1,0 +1,105 @@
+# GitHub Actions workflow for automated agent evaluation
+# Triggers on PRs to main that modify agent source or policies
+# Uses the Contoso-Eval-SP service principal (see modules/07-evaluation/src/setup_eval_sp.ps1)
+
+name: Agent Evaluation Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "modules/02-build-your-first-agent/**"
+      - "modules/07-evaluation/**"
+
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: "Evaluation dataset path (relative to repo root)"
+        required: false
+        default: "modules/07-evaluation/data/contoso-estimator-eval-ci.json"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  evaluate-agent:
+    name: Run Agent Evaluation
+    runs-on: ubuntu-latest
+    environment: evaluation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Run Agent Evaluation
+        uses: microsoft/ai-agent-evals@v3-beta
+        id: eval
+        with:
+          project-endpoint: ${{ secrets.AZURE_AI_PROJECT_ENDPOINT }}
+          agent-name: "contoso-estimator-advisor"
+          dataset: ${{ inputs.dataset || 'modules/07-evaluation/data/contoso-estimator-eval-ci.json' }}
+          evaluators: |
+            builtin.task_adherence
+            builtin.tool_call_accuracy
+            builtin.groundedness
+            builtin.coherence
+          judge-model: "gpt-5.4"
+          fail-threshold: |
+            task_adherence: 0.80
+            tool_call_accuracy: 0.75
+            groundedness: 0.70
+            coherence: 0.70
+
+      - name: Post Evaluation Results to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultPath = '${{ steps.eval.outputs.result-file }}';
+            let summary = '## 🤖 Agent Evaluation Results\n\n';
+
+            if (fs.existsSync(resultPath)) {
+              const results = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+              summary += '| Evaluator | Score | Threshold | Status |\n';
+              summary += '|-----------|:-----:|:---------:|:------:|\n';
+
+              const thresholds = { task_adherence: 0.80, tool_call_accuracy: 0.75, groundedness: 0.70, coherence: 0.70 };
+
+              for (const [name, score] of Object.entries(results.scores || {})) {
+                const threshold = thresholds[name] || 0.70;
+                const status = score >= threshold ? '✅ Pass' : '❌ Fail';
+                summary += `| ${name} | ${(score * 100).toFixed(1)}% | ${(threshold * 100).toFixed(0)}% | ${status} |\n`;
+              }
+
+              summary += `\n**Overall:** ${results.passed ? '✅ All gates passed' : '❌ Quality gate failed'}\n`;
+              summary += `\n<details><summary>Details</summary>\n\n`;
+              summary += `- Dataset: ${results.dataset || 'N/A'}\n`;
+              summary += `- Queries evaluated: ${results.total_queries || 'N/A'}\n`;
+              summary += `- Judge model: gpt-5.4\n`;
+              summary += `- Run ID: ${results.run_id || 'N/A'}\n`;
+              summary += `</details>`;
+            } else {
+              summary += '⚠️ Evaluation results file not found.\n';
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+
+      - name: Fail if quality gate not met
+        if: steps.eval.outputs.passed == 'false'
+        run: |
+          echo "::error::Agent evaluation quality gate failed. Check PR comment for details."
+          exit 1

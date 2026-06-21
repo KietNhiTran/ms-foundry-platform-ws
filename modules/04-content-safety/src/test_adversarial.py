@@ -5,7 +5,7 @@ Automated verification of the 4 adversarial prompts from Module 4 Step 3,
 plus a baseline test to confirm the agent works normally.
 
 Prerequisites:
-    1. Module 1 deployed (Foundry resource + GPT-5.4)
+    1. Module 1 deployed (Foundry resource + GPT-4.1)
     2. setup_agent.py run (agent + vector store created)
     3. Guardrails configured in Foundry portal:
        - Guardrail 'contoso-estimation-guardrail' with 6 controls

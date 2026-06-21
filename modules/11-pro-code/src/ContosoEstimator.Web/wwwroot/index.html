@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contoso Estimator Advisor</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Contoso</h2>
+        <span class="subtitle">Estimator Advisor</span>
+      </div>
+      <button id="new-chat-btn" class="new-chat-btn">+ New Chat</button>
+      <nav id="chat-history" class="chat-history"></nav>
+      <div class="sidebar-footer">
+        <span class="powered-by">Powered by Microsoft Foundry</span>
+      </div>
+    </aside>
+
+    <!-- Main chat area -->
+    <main class="chat-main">
+      <!-- Header -->
+      <header class="chat-header">
+        <h1>Contoso Estimator Advisor</h1>
+        <span class="status-badge" id="status-badge">Connecting…</span>
+      </header>
+
+      <!-- Messages -->
+      <div class="messages" id="messages">
+        <div class="welcome-message">
+          <div class="welcome-icon">📐</div>
+          <h2>Welcome to Contoso Estimator</h2>
+          <p>I can help you with cost estimation, rate lookups, policy questions, and project calculations.</p>
+          <div class="suggestions">
+            <button class="suggestion" data-prompt="What is the concrete supply rate for 32MPa in NSW?">
+              🏗️ Concrete rates NSW
+            </button>
+            <button class="suggestion" data-prompt="Calculate cost for 5000m³ of 40MPa concrete in VIC">
+              💰 Cost calculation
+            </button>
+            <button class="suggestion" data-prompt="What is the approval threshold for tenders between $20M and $50M?">
+              📋 Tender approvals
+            </button>
+            <button class="suggestion" data-prompt="What contingency percentage applies to projects over $100M?">
+              📊 Contingency rates
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div class="input-area">
+        <form id="chat-form" class="chat-form">
+          <div class="input-wrapper">
+            <textarea
+              id="user-input"
+              placeholder="Ask about rates, policies, cost calculations, or estimation guidance…"
+              rows="1"
+              autofocus
+            ></textarea>
+            <button type="submit" id="send-btn" class="send-btn" disabled>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+          <p class="disclaimer">AI-generated responses — always verify estimates with your project systems.</p>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/chat.js"></script>
+</body>
+</html>

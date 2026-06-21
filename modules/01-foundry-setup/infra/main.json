@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "17619321081599941333"
+      "templateHash": "739744027476813525"
     }
   },
   "parameters": {
@@ -31,23 +31,80 @@
     },
     "modelDeploymentName": {
       "type": "string",
-      "defaultValue": "gpt-5-4",
+      "defaultValue": "gpt-4o",
       "metadata": {
-        "description": "GPT-5.4 deployment name"
+        "description": "Model deployment name"
+      }
+    },
+    "modelName": {
+      "type": "string",
+      "defaultValue": "gpt-4o",
+      "metadata": {
+        "description": "Model name to deploy"
+      }
+    },
+    "modelVersion": {
+      "type": "string",
+      "defaultValue": "2024-08-06",
+      "metadata": {
+        "description": "Model version"
       }
     },
     "tpmLimit": {
       "type": "int",
       "defaultValue": 30000,
       "metadata": {
-        "description": "Tokens per minute limit for GPT-5.4"
+        "description": "Tokens per minute limit"
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-appinsights', parameters('foundryResourceName'))]",
+      "metadata": {
+        "description": "Name of the Application Insights resource"
+      }
+    },
+    "logAnalyticsName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-logs', parameters('foundryResourceName'))]",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace"
       }
     }
   },
+  "variables": {
+    "readerRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+  },
   "resources": [
     {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[parameters('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.CognitiveServices/accounts",
-      "apiVersion": "2024-10-01",
+      "apiVersion": "2025-06-01",
       "name": "[parameters('foundryResourceName')]",
       "location": "[parameters('location')]",
       "kind": "AIServices",
@@ -56,7 +113,8 @@
       },
       "properties": {
         "customSubDomainName": "[parameters('foundryResourceName')]",
-        "publicNetworkAccess": "Enabled"
+        "publicNetworkAccess": "Enabled",
+        "allowProjectManagement": true
       },
       "identity": {
         "type": "SystemAssigned"
@@ -64,7 +122,7 @@
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/deployments",
-      "apiVersion": "2024-10-01",
+      "apiVersion": "2025-06-01",
       "name": "[format('{0}/{1}', parameters('foundryResourceName'), parameters('modelDeploymentName'))]",
       "sku": {
         "name": "GlobalStandard",
@@ -73,8 +131,8 @@
       "properties": {
         "model": {
           "format": "OpenAI",
-          "name": "GPT-5.4",
-          "version": "2025-04-14"
+          "name": "[parameters('modelName')]",
+          "version": "[parameters('modelVersion')]"
         }
       },
       "dependsOn": [
@@ -83,12 +141,52 @@
     },
     {
       "type": "Microsoft.CognitiveServices/accounts/projects",
-      "apiVersion": "2024-10-01",
+      "apiVersion": "2025-06-01",
       "name": "[format('{0}/{1}', parameters('foundryResourceName'), parameters('projectName'))]",
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {},
       "dependsOn": [
         "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryResourceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/connections",
+      "apiVersion": "2025-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('foundryResourceName'), format('{0}-appinsights', parameters('foundryResourceName')))]",
+      "properties": {
+        "category": "AppInsights",
+        "target": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+        "authType": "ApiKey",
+        "isSharedToAll": true,
+        "credentials": {
+          "key": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').ConnectionString]"
+        },
+        "metadata": {
+          "ApiType": "Azure",
+          "ResourceId": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryResourceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+      "name": "[guid(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('foundryResourceName'), parameters('projectName')), variables('readerRoleDefinitionId'))]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('foundryResourceName'), parameters('projectName')), '2025-06-01', 'full').identity.principalId]",
+        "roleDefinitionId": "[variables('readerRoleDefinitionId')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('foundryResourceName'), parameters('projectName'))]"
       ]
     }
   ],
@@ -104,6 +202,14 @@
     "endpoint": {
       "type": "string",
       "value": "[format('https://{0}.services.ai.azure.com/api/projects/{1}', parameters('foundryResourceName'), parameters('projectName'))]"
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').ConnectionString]"
+    },
+    "appInsightsResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]"
     }
   }
 }

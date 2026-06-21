@@ -9,11 +9,46 @@ param location string = resourceGroup().location
 @description('Name of the Foundry project')
 param projectName string = 'contoso-estimator'
 
-@description('GPT-5.4 deployment name')
-param modelDeploymentName string = 'gpt-5-4'
+@description('Model deployment name')
+param modelDeploymentName string = 'gpt-4o'
 
-@description('Tokens per minute limit for GPT-5.4')
+@description('Model name to deploy')
+param modelName string = 'gpt-4o'
+
+@description('Model version')
+param modelVersion string = '2024-08-06'
+
+@description('Tokens per minute limit')
 param tpmLimit int = 30000
+
+@description('Name of the Application Insights resource')
+param appInsightsName string = '${foundryResourceName}-appinsights'
+
+@description('Name of the Log Analytics workspace')
+param logAnalyticsName string = '${foundryResourceName}-logs'
+
+// Log Analytics Workspace (required by Application Insights)
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: logAnalyticsName
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+  }
+}
+
+// Application Insights for tracing
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
+  }
+}
 
 // Foundry Resource (AI Services account)
 resource foundryResource 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
@@ -44,8 +79,8 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'GPT-5.4'
-      version: '2025-04-14'
+      name: modelName
+      version: modelVersion
     }
   }
 }
@@ -61,7 +96,43 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
   properties: {}
 }
 
+// Connect Application Insights to the Foundry resource
+// Ref: https://github.com/microsoft-foundry/foundry-samples/tree/main/infrastructure/infrastructure-setup-bicep/01-connections
+resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/connections@2025-04-01-preview' = {
+  name: '${foundryResourceName}-appinsights'
+  parent: foundryResource
+  properties: {
+    category: 'AppInsights'
+    target: appInsights.id
+    authType: 'ApiKey'
+    isSharedToAll: true
+    credentials: {
+      key: appInsights.properties.ConnectionString
+    }
+    metadata: {
+      ApiType: 'Azure'
+      ResourceId: appInsights.id
+    }
+  }
+}
+
+// Reader role definition ID: acdd72a7-3385-48ef-bd42-f606fba81ae7
+var readerRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
+
+// Assign the Foundry project's managed identity the Reader role on Application Insights
+resource projectReaderOnAppInsights 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appInsights.id, project.id, readerRoleDefinitionId)
+  scope: appInsights
+  properties: {
+    principalId: project.identity.principalId
+    roleDefinitionId: readerRoleDefinitionId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // Outputs
 output foundryResourceId string = foundryResource.id
 output projectId string = project.id
 output endpoint string = 'https://${foundryResourceName}.services.ai.azure.com/api/projects/${projectName}'
+output appInsightsConnectionString string = appInsights.properties.ConnectionString
+output appInsightsResourceId string = appInsights.id

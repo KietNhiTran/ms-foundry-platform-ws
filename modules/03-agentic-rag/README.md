@@ -102,6 +102,17 @@ Agent → Foundry IQ (via portal or MCPTool in SDK)
 | 4 | Blob container `project-history` created | Storage → Containers → New | Container visible |
 | 5 | Upload 3 project PDFs | Portal upload or `az storage blob upload-batch` | Files visible in container |
 | 6 | Agent exists | From Module 2 | `contoso-estimator-advisor` in portal |
+| 7 | RBAC configured for agentic retrieval | See access configuration guide below | Role assignments visible |
+
+> **⚠️ RBAC Configuration Required:** Before the demo, configure role assignments so AI Search can index blob data and Foundry can query the index. Follow the access setup steps in:  
+> [Quickstart: Agentic Retrieval in the Azure Portal - Configure Access](https://learn.microsoft.com/en-us/azure/search/get-started-portal-agentic-retrieval#configure-access)
+>
+> Summary of required role assignments:
+> | Identity | Role | On Resource |
+> |----------|------|-------------|
+> | AI Search managed identity | **Storage Blob Data Contributor** | Storage Account |
+> | AI Search managed identity | **Cognitive Services User** | Foundry resource |
+> | Foundry project managed identity | **Search Index Data Reader** | AI Search service |
 
 ### Demo Steps
 
