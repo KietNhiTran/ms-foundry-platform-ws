@@ -1,6 +1,6 @@
 /// <summary>
 /// Contoso Estimator — Streaming Chat Web UI (ASP.NET Core Minimal API)
-/// 
+///
 /// A thin API layer between a browser-based chat UI and Foundry Agent Service.
 /// Follows the Basic Microsoft Foundry Chat reference architecture:
 ///   https://learn.microsoft.com/azure/architecture/ai-ml/architecture/basic-microsoft-foundry-chat
@@ -20,6 +20,9 @@ using Azure.AI.Extensions.OpenAI;
 using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,8 +40,10 @@ var app = builder.Build();
 
 // Foundry SDK clients
 var credential = new DefaultAzureCredential();
-var projectClient = new AIProjectClient(new Uri(projectEndpoint), credential);
-var openAIClient = projectClient.GetOpenAIClient();
+var projectClient = new AIProjectClient(
+    endpoint: new Uri(projectEndpoint),
+    tokenProvider: credential);
+var conversationsClient = projectClient.ProjectOpenAIClient.GetProjectConversationsClient();
 
 // Serve static files from wwwroot/
 app.UseStaticFiles();
@@ -54,17 +59,8 @@ app.MapGet("/api/health", () => Results.Ok(new
 // ── Create conversation ──────────────────────────────────────────────────────
 app.MapPost("/api/conversations", async () =>
 {
-    var conversationsClient = openAIClient.GetConversationsClient();
-    var conversation = await conversationsClient.CreateConversationAsync();
+    var conversation = await conversationsClient.CreateProjectConversationAsync();
     return Results.Ok(new { conversation_id = conversation.Value.Id });
-});
-
-// ── Delete conversation ──────────────────────────────────────────────────────
-app.MapDelete("/api/conversations/{conversationId}", async (string conversationId) =>
-{
-    var conversationsClient = openAIClient.GetConversationsClient();
-    await conversationsClient.DeleteConversationAsync(conversationId);
-    return Results.Ok(new { deleted = true });
 });
 
 // ── Chat — streaming via SSE ─────────────────────────────────────────────────
@@ -79,52 +75,69 @@ app.MapPost("/api/chat", async (HttpContext context, [FromBody] ChatRequest req)
     // Create conversation if not provided
     if (string.IsNullOrEmpty(conversationId))
     {
-        var conversationsClient = openAIClient.GetConversationsClient();
-        var conversation = await conversationsClient.CreateConversationAsync();
+        var conversation = await conversationsClient.CreateProjectConversationAsync();
         conversationId = conversation.Value.Id;
     }
 
-    // Send conversation_id event
+    // Send conversation_id event so the client can persist it for follow-ups
     await WriteSseEvent(context, "conversation_id",
         new { conversation_id = conversationId });
 
     try
     {
-        var responsesClient = openAIClient.GetResponsesClient();
+        var responsesClient = projectClient.ProjectOpenAIClient
+            .GetProjectResponsesClientForAgent(
+                defaultAgent: agentName,
+                defaultConversationId: conversationId);
 
-        // Create response with streaming
-        await foreach (var streamEvent in responsesClient.CreateResponseStreamingAsync(
-            input: req.Message,
-            options: new()
-            {
-                ConversationId = conversationId,
-                AgentName = agentName,
-            }))
+        // Build the first turn's request. The same options shape is reused for
+        // any MCP approval round-trips (with PreviousResponseId set).
+        var options = new CreateResponseOptions();
+        options.InputItems.Add(ResponseItem.CreateUserMessageItem(req.Message));
+
+        // Bounded loop to handle agent-initiated MCP approval pauses.
+        for (var iteration = 0; iteration < 4; iteration++)
         {
-            // Handle text deltas
-            if (streamEvent.Delta is not null)
-            {
-                await WriteSseEvent(context, "delta",
-                    new { text = streamEvent.Delta });
-            }
+            ResponseResult? completed = null;
 
-            // Handle MCP approval requests (auto-approve for demo)
-            if (streamEvent.Item?.Type == "mcp_approval_request")
+            await foreach (StreamingResponseUpdate update in
+                responsesClient.CreateResponseStreamingAsync(options))
             {
-                await WriteSseEvent(context, "mcp_approval", new
+                switch (update)
                 {
-                    approval_request_id = streamEvent.Item.Id,
-                    server_label = streamEvent.Item.ServerLabel ?? "Tool",
-                    name = streamEvent.Item.Name ?? "",
-                });
+                    case StreamingResponseOutputTextDeltaUpdate delta:
+                        await WriteSseEvent(context, "delta",
+                            new { text = delta.Delta });
+                        break;
+
+                    case StreamingResponseCompletedUpdate done:
+                        completed = done.Response;
+                        await WriteSseEvent(context, "response_id",
+                            new { response_id = done.Response.Id });
+                        break;
+                }
             }
 
-            // Capture response ID
-            if (streamEvent.Response?.Id is not null)
+            if (completed is null) break;
+
+            var approval = completed.OutputItems
+                .OfType<McpToolCallApprovalRequestItem>()
+                .FirstOrDefault();
+
+            if (approval is null) break;
+
+            await WriteSseEvent(context, "mcp_approval", new
             {
-                await WriteSseEvent(context, "response_id",
-                    new { response_id = streamEvent.Response.Id });
-            }
+                approval_request_id = approval.Id,
+                server_label = approval.ServerLabel,
+            });
+
+            // Auto-approve for demo and continue the same response chain.
+            options = new CreateResponseOptions { PreviousResponseId = completed.Id };
+            options.InputItems.Add(
+                ResponseItem.CreateMcpApprovalResponseItem(
+                    approvalRequestId: approval.Id,
+                    approved: true));
         }
 
         await WriteSseEvent(context, "done", new { status = "complete" });

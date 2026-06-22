@@ -22,6 +22,12 @@ obj/
 .env
 .env.*
 
+# Module 11 pro-code — local appsettings contain Foundry endpoints, subscription
+# IDs, and App Insights connection strings. Copy appsettings.example.json →
+# appsettings.json and fill in your own values.
+modules/11-pro-code/src/ContosoEstimator/appsettings.json
+modules/11-pro-code/src/ContosoEstimator.Web/appsettings.json
+
 # Editor and OS artifacts
 .vscode/
 .idea/

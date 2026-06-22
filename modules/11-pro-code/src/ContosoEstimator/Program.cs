@@ -28,28 +28,11 @@ Console.WriteLine();
 // await ContosoEstimator.Steps.Step01_FirstApiCall.RunAsync(config);
 
 // ============================================================
-// Step 2: Create Agent with File Search (Module 2 - Build Agent)
+// Step 2: Create Agent with File Search + Foundry IQ (Modules 2 + 3)
 // Portal equivalent: Build → Agents → Create Agent + upload files
+//                    + add Foundry IQ knowledge source
 // ============================================================
-// await ContosoEstimator.Steps.Step02_CreateAgent.RunAsync(config);
-
-// ============================================================
-// Step 3: Connect Foundry IQ Knowledge Base (Module 3 - RAG)
-// Portal equivalent: Agent → Knowledge → Connect to Foundry IQ
-// ============================================================
-// await ContosoEstimator.Steps.Step03_FoundryIQ.RunAsync(config);
-
-// ============================================================
-// Step 4: Add Content Safety Guardrail (Module 4 - Safety)
-// Portal equivalent: Agent → Guardrails → Create guardrail
-// ============================================================
-// await ContosoEstimator.Steps.Step04_ContentSafety.RunAsync(config);
-
-// ============================================================
-// Step 5: Wire Additional Tools (Module 5 - Toolkit)
-// Portal equivalent: Agent → Add tool → Code Interpreter / OpenAPI
-// ============================================================
-// await ContosoEstimator.Steps.Step05_AddTools.RunAsync(config);
+await ContosoEstimator.Steps.Step02_CreateAgent.RunAsync(config);
 
 // ============================================================
 // Step 6: Add Tracing Instrumentation (Module 6 - Observability)
@@ -62,9 +45,10 @@ Console.WriteLine();
 // Portal equivalent: Build → Evaluations → Create evaluation
 // ============================================================
 // await ContosoEstimator.Steps.Step07_Evaluation.RunAsync(config);
+// await ContosoEstimator.Steps.Step07b_ContinuousEvaluation.RunAsync(config);
 
 // ============================================================
 // Step 8: Full Streaming Chat UI (Bonus - Production Pattern)
 // No portal equivalent — this is production-grade client code
 // ============================================================
-await ContosoEstimator.Steps.Step08_StreamingChat.RunAsync(config);
+// await ContosoEstimator.Steps.Step08_StreamingChat.RunAsync(config);

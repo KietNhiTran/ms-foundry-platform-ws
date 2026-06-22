@@ -1,15 +1,20 @@
 /// <summary>
 /// Module 7b: Continuous Evaluation Setup (Pro-Code Version)
 /// Portal equivalent: Agent → Monitor → Settings → Continuous evaluation
-/// 
-/// This step creates a continuous evaluation rule that auto-scores
-/// production agent traffic. It evaluates existing traces — the agent
-/// is NOT re-invoked, so there's no additional cost from tool calls.
+///
+/// Creates a continuous evaluation rule that auto-scores production agent
+/// traffic. The agent is NOT re-invoked — existing traces are scored, so
+/// there's no additional cost from tool calls.
+///
+/// Requires Azure.AI.Projects 2.1.0-beta.3 or newer
+/// (the EvaluationRules accessor and Azure.AI.Projects.Evaluation types
+///  are part of the preview SDK surface).
 /// </summary>
 
 using System.ClientModel;
 using System.Text.Json;
 using Azure.AI.Projects;
+using Azure.AI.Projects.Evaluation;
 using Azure.AI.Extensions.OpenAI;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +29,7 @@ public static class Step07b_ContinuousEvaluation
         Console.WriteLine("=== Step 7b: Continuous Evaluation (Module 7) ===\n");
 
         var projectEndpoint = config["Foundry:ProjectEndpoint"]!;
+        var modelDeployment = config["Foundry:ModelDeployment"]!;
         var agentName = config["Foundry:AgentName"] ?? "contoso-estimator-advisor";
 
         var credential = new DefaultAzureCredential();
@@ -31,12 +37,16 @@ public static class Step07b_ContinuousEvaluation
             endpoint: new Uri(projectEndpoint),
             tokenProvider: credential);
 
-#pragma warning disable OPENAI001 // Suppress experimental API warning (preview)
+#pragma warning disable OPENAI001 // Preview API
         var evaluationClient = projectClient.ProjectOpenAIClient.GetEvaluationClient();
 #pragma warning restore OPENAI001
 
         // ── Step 1: Create the evaluation object ─────────────────────────
         Console.WriteLine("[1/3] Creating evaluation object with evaluators...");
+
+        // Each built-in LLM-as-judge evaluator needs the judge model
+        // (deployment_name) it should call to score responses.
+        var initParams = new { deployment_name = modelDeployment };
 
         var evaluationConfig = BinaryData.FromObjectAsJson(new
         {
@@ -44,19 +54,18 @@ public static class Step07b_ContinuousEvaluation
             data_source_config = new { type = "azure_ai_source", scenario = "responses" },
             testing_criteria = new object[]
             {
-                new { type = "azure_ai_evaluator", name = "task_adherence", evaluator_name = "builtin.task_adherence" },
-                new { type = "azure_ai_evaluator", name = "tool_call_accuracy", evaluator_name = "builtin.tool_call_accuracy" },
-                new { type = "azure_ai_evaluator", name = "groundedness", evaluator_name = "builtin.groundedness" },
-                new { type = "azure_ai_evaluator", name = "coherence", evaluator_name = "builtin.coherence" },
-                new { type = "azure_ai_evaluator", name = "intent_resolution", evaluator_name = "builtin.intent_resolution" },
+                new { type = "azure_ai_evaluator", name = "task_adherence",     evaluator_name = "builtin.task_adherence",     initialization_parameters = initParams },
+                new { type = "azure_ai_evaluator", name = "tool_call_accuracy", evaluator_name = "builtin.tool_call_accuracy", initialization_parameters = initParams },
+                new { type = "azure_ai_evaluator", name = "groundedness",       evaluator_name = "builtin.groundedness",       initialization_parameters = initParams },
+                new { type = "azure_ai_evaluator", name = "coherence",          evaluator_name = "builtin.coherence",          initialization_parameters = initParams },
+                new { type = "azure_ai_evaluator", name = "intent_resolution",  evaluator_name = "builtin.intent_resolution",  initialization_parameters = initParams },
             }
         });
 
         using var evaluationContent = BinaryContent.Create(evaluationConfig);
         var evaluationResult = await evaluationClient.CreateEvaluationAsync(evaluationContent);
 
-        using var evalDoc = JsonDocument.Parse(
-            evaluationResult.GetRawResponse().Content);
+        using var evalDoc = JsonDocument.Parse(evaluationResult.GetRawResponse().Content);
         var evaluationId = evalDoc.RootElement.GetProperty("id").GetString()!;
         var evaluationName = evalDoc.RootElement.GetProperty("name").GetString()!;
         Console.WriteLine($"  Evaluation created (id: {evaluationId}, name: {evaluationName})");
@@ -83,7 +92,7 @@ public static class Step07b_ContinuousEvaluation
             id: "contoso-estimator-continuous-eval",
             evaluationRule: continuousRule);
 
-        Console.WriteLine($"  Rule created (id: {createdRule.Id}, name: {createdRule.DisplayName})");
+        Console.WriteLine($"  Rule created (id: {createdRule.Value.Id}, name: {createdRule.Value.DisplayName})");
 
         // ── Step 3: Verify recent runs ───────────────────────────────────
         Console.WriteLine("[3/3] Checking for existing evaluation runs...");
@@ -91,17 +100,13 @@ public static class Step07b_ContinuousEvaluation
         var runsResult = await evaluationClient.GetEvaluationRunsAsync(
             evaluationId, null, null, null, null, new());
 
-        using var runsDoc = JsonDocument.Parse(
-            runsResult.GetRawResponse().Content);
+        using var runsDoc = JsonDocument.Parse(runsResult.GetRawResponse().Content);
         var runs = runsDoc.RootElement.GetProperty("data");
 
-        if (runs.GetArrayLength() > 0)
+        if (runs.GetArrayLength() > 0 &&
+            runs[0].TryGetProperty("report_url", out var reportUrlElement))
         {
-            var firstRun = runs[0];
-            if (firstRun.TryGetProperty("report_url", out var reportUrlElement))
-            {
-                Console.WriteLine($"  Latest report: {reportUrlElement.GetString()}");
-            }
+            Console.WriteLine($"  Latest report: {reportUrlElement.GetString()}");
         }
         else
         {
@@ -117,6 +122,6 @@ public static class Step07b_ContinuousEvaluation
         Console.WriteLine();
         Console.WriteLine("To clean up:");
         Console.WriteLine("  await projectClient.EvaluationRules.DeleteAsync(id: \"contoso-estimator-continuous-eval\");");
-        Console.WriteLine("\n✅ Step 7b complete — continuous evaluation rule active.\n");
+        Console.WriteLine("\nStep 7b complete — continuous evaluation rule active.\n");
     }
 }
