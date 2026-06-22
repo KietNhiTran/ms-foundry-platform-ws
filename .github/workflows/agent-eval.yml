@@ -43,7 +43,7 @@ jobs:
         id: eval
         with:
           project-endpoint: ${{ secrets.AZURE_AI_PROJECT_ENDPOINT }}
-          agent-name: "contoso-estimator-advisor"
+          agent-name: "contoso-estimation-advisor"
           dataset: ${{ inputs.dataset || 'modules/07-evaluation/data/contoso-estimator-eval-ci.json' }}
           evaluators: |
             builtin.task_adherence
