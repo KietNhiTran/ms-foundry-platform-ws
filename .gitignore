@@ -27,3 +27,9 @@ obj/
 .idea/
 .DS_Store
 Thumbs.db
+
+# SpecKit Companion (alfredoperez.speckit-companion) machine-local cache
+.specify/companion.yml
+
+# VS Code multi-root workspace file (local to each contributor)
+ms-foundry-platform-ws.code-workspace

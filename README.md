@@ -13,7 +13,7 @@
 
 A comprehensive enablement workshop covering the **Microsoft Foundry** platform — the unified Azure platform-as-a-service for enterprise AI operations, model building, and agent development.
 
-### Scenario: Contoso Estimator Advisor
+### Scenario: Contoso Estimation Advisor
 
 Throughout this workshop, we progressively build a single agent — the **Contoso Estimator Advisor** — for **Contoso Infrastructure**, a fictional large-scale construction and engineering company. The agent helps estimators prepare project bids by:
 
