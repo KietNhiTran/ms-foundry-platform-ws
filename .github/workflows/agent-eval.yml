@@ -27,7 +27,6 @@ jobs:
   evaluate-agent:
     name: Run Agent Evaluation
     runs-on: ubuntu-latest
-    environment: evaluation
 
     steps:
       - name: Checkout repository
