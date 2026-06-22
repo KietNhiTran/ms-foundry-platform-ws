@@ -173,6 +173,7 @@ Write-Host ""
 Write-Host "  AZURE_CLIENT_ID=$appId"
 Write-Host "  AZURE_CLIENT_SECRET=$clientSecret"
 Write-Host "  AZURE_TENANT_ID=$tenantId"
+Write-Host "  AZURE_SUBSCRIPTION_ID=$SubscriptionId"
 Write-Host "  AZURE_AI_PROJECT_ENDPOINT=<your-foundry-project-endpoint>"
 Write-Host ""
 Write-Host "  IMPORTANT: Save the client secret NOW." -ForegroundColor Red
