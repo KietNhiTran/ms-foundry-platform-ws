@@ -111,6 +111,26 @@ Write-Host "[5/5] Assigning RBAC roles on resource group '$ResourceGroup'..." -F
 $roles = @("Foundry User", "Cognitive Services OpenAI User", "Storage Blob Data Contributor")
 $scope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroup"
 
+# Reader at subscription level — required for az login to enumerate subscriptions
+$subScope = "/subscriptions/$SubscriptionId"
+$existingReader = az role assignment list `
+    --assignee $appId `
+    --role "Reader" `
+    --scope $subScope `
+    --query "length(@)" `
+    --output tsv 2>$null
+
+if ($existingReader -gt 0) {
+    Write-Host "  'Reader' (subscription) already assigned"
+} else {
+    az role assignment create `
+        --assignee $appId `
+        --role "Reader" `
+        --scope $subScope `
+        --output none 2>$null
+    Write-Host "  Assigned 'Reader' at subscription scope"
+}
+
 foreach ($role in $roles) {
     $existing = az role assignment list `
         --assignee $appId `
