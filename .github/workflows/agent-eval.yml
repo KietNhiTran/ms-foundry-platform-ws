@@ -45,6 +45,6 @@ jobs:
           azure-ai-project-endpoint: ${{ secrets.AZURE_AI_PROJECT_ENDPOINT }}
           deployment-name: gpt-5.4
           data-path: modules/07-evaluation/data/contoso-estimator-eval-ci.json
-          agent-name: "contoso-estimation-advisor"
+          agent-ids: contoso-estimation-advisor:17
 
       
