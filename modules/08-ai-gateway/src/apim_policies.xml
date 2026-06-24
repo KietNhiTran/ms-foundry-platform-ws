@@ -1,0 +1,135 @@
+<!--
+  CIMIC AI Gateway — APIM Policy Samples (Module 08)
+
+  These XML snippets are applied in Azure API Management (APIM) to govern
+  AI traffic through the Foundry AI Gateway. Copy individual policy blocks
+  into your APIM policy editor.
+
+  Reference: https://learn.microsoft.com/azure/api-management/api-management-policies#ai-gateway
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     1. Token Rate Limiting — per subscription key
+     Limits to 10,000 tokens per minute per consumer.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <llm-token-limit
+      tokens-per-minute="10000"
+      counter-key="@(context.Subscription.Id)"
+      estimate-prompt-tokens="true"
+      remaining-tokens-variable-name="remainingTokens" />
+  </inbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     2. Token Quota — daily limit per project
+     Caps total token usage to 500,000 per day per subscription.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <llm-token-limit
+      tokens-per-minute="50000"
+      token-quota="500000"
+      token-quota-period="86400"
+      counter-key="@(context.Subscription.Id)"
+      estimate-prompt-tokens="true" />
+  </inbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     3. Token Usage Metrics — emit to Application Insights
+     Sends token consumption metrics for cost monitoring dashboards.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <outbound>
+    <base />
+    <llm-emit-token-metric namespace="AICIMICGateway">
+      <dimension name="Subscription" value="@(context.Subscription.Name)" />
+      <dimension name="Model" value="@(context.Request.Headers.GetValueOrDefault("model","unknown"))" />
+      <dimension name="Agent" value="@(context.Request.Headers.GetValueOrDefault("x-agent-name","unknown"))" />
+    </llm-emit-token-metric>
+  </outbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     4. Semantic Caching — lookup + store
+     Requires Azure Managed Redis configured as external cache.
+     Reduces cost by reusing responses for semantically similar prompts.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <llm-semantic-cache-lookup
+      score-threshold="0.8"
+      embeddings-backend-id="embeddings-deployment"
+      embeddings-backend-auth="system-assigned" />
+  </inbound>
+  <outbound>
+    <base />
+    <llm-semantic-cache-store duration="3600" />
+  </outbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     5. Content Safety — enforce Azure AI Content Safety checks
+     Screens prompts before they reach the model backend.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <llm-content-safety
+      backend-id="content-safety-backend">
+      <categories>
+        <category name="Hate" threshold="4" />
+        <category name="Violence" threshold="4" />
+        <category name="SelfHarm" threshold="4" />
+        <category name="Sexual" threshold="4" />
+      </categories>
+    </llm-content-safety>
+  </inbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     6. MCP Tool Rate Limiting — per user for Genie MCP
+     Limits MCP server calls to 60 per minute per user identity.
+
+     IMPORTANT: Apply this policy on the MCP API in APIM, NOT on the
+     model API. Each API has its own policy scope:
+       - Model API: cimic-project-intellige-resource
+       - MCP API:   tool-cimic-project-intelligence-dev-*
+     Go to APIM → APIs → select the MCP tool API → All operations → </>
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <rate-limit-by-key
+      calls="60"
+      renewal-period="60"
+      counter-key="@(context.Request.Headers.GetValueOrDefault("x-user-id","anonymous"))" />
+  </inbound>
+</policies>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     7. IP Filtering — restrict to corporate network
+     Only allows traffic from specified IP ranges.
+     ═══════════════════════════════════════════════════════════════════ -->
+<policies>
+  <inbound>
+    <base />
+    <ip-filter action="allow">
+      <address-range from="10.0.0.0" to="10.255.255.255" />
+      <address-range from="172.16.0.0" to="172.31.255.255" />
+      <!-- Add your corporate IP ranges here -->
+    </ip-filter>
+  </inbound>
+</policies>

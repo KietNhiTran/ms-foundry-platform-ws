@@ -1,0 +1,9 @@
+# Foundry SDK
+azure-ai-projects>=2.0.0
+azure-identity>=1.19.0
+
+# OpenAI client
+openai>=1.40.0
+
+# Environment variable management
+python-dotenv>=1.0.0
