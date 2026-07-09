@@ -28,11 +28,22 @@ obj/
 modules/11-pro-code/src/ContosoEstimator/appsettings.json
 modules/11-pro-code/src/ContosoEstimator.Web/appsettings.json
 
+# Module 03 Track 2 RLS app — local appsettings hold the Entra client secret,
+# tenant/client/group IDs and SQL/Search endpoints. Copy appsettings.example.json
+# → appsettings.json and fill in your own values (secret via `dotnet user-secrets`).
+modules/03-agentic-rag/src/track2-identity-rls/appsettings.json
+
 # Editor and OS artifacts
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Azurite local storage emulator state
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
+__tablestorage__/
 
 # SpecKit Companion (alfredoperez.speckit-companion) machine-local cache
 .specify/companion.yml

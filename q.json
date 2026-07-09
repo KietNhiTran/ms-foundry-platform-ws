@@ -1,0 +1,1 @@
+﻿{"query":"AppDependencies | where AppRoleName == \"responsesapi\" | summarize First=min(TimeGenerated), Last=max(TimeGenerated), Count=count() | extend GapHours=datetime_diff(\"hour\", now(), Last)"}

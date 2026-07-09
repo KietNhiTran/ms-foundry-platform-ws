@@ -170,6 +170,22 @@ Observe:
 
 ---
 
+## 3.6 Deep-Dive: Foundry IQ & Azure SQL Integration with Row-Level Access
+
+A separate, self-contained deep-dive serves the **structured** rate library from
+**Azure SQL** as a Foundry IQ knowledge source and adds per-user **row-level access
+control** so an estimator only sees rates for their region.
+
+➡️ **[Foundry IQ & Azure SQL Integration with Row-Level Access](docs/00-foundry-iq-azure-sql-rls.md)**
+
+It walks through resource setup, creating the `indexedSql` knowledge source, and
+row-level access. The shipped, recommended option is **Track 2** (Entra
+identity-native permission filters) with a runnable .NET web app; **Track 1**
+(app-mediated security filter) is kept as a concept-only reference, since it isn't
+identity-native and can't be delegated to a Foundry agent.
+
+---
+
 ## Key Takeaways
 
 1. **Foundry IQ** = managed knowledge base on Azure AI Search + knowledge sources + agentic retrieval

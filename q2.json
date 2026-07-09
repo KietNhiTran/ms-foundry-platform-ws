@@ -1,0 +1,1 @@
+﻿{"query":"AppDependencies | where AppRoleName == \"responsesapi\" | top 3 by TimeGenerated desc | project TimeGenerated, Name, Target, DependencyType, Success, Properties=tostring(Properties)"}

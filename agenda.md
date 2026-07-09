@@ -71,5 +71,16 @@ Available on request to tailor the agenda:
 | Module 9 | 50 min | Safety & Red Teaming (automated adversarial testing) |
 | Module 10 | 50 min | Fleet Management & Agent 365 (Control Plane, publish to Microsoft Teams) |
 
+### Security Track (Enterprise Platform Security)
+
+Fills the enterprise platform-security gaps (identity, network, data) beyond the runtime security already in Modules 4 and 9. Deliver together (~90 min) or individually.
+
+| Module | Duration | Topic |
+|--------|----------|-------|
+| Module 12 | 45 min | Secure Agent Identity & Access (Agent Identity / Entra Agent ID, OBO passthrough, least-privilege RBAC) |
+| Module 13 | 45 min | Network Isolation & Data Protection (private endpoints, VNet injection, CMK, data residency, BYO storage) |
+
+> Governance topics not shown live — Defender for Cloud, Azure Policy, Purview DLP, security baseline, compliance — are collected in [shared/docs/security-governance.md](shared/docs/security-governance.md).
+
 ---
 
