@@ -81,9 +81,28 @@ An incorrect audience fails authentication **even when RBAC is correct**.
 ## Limitations & common failures
 
 - Only some tools support agent-identity auth today — check the tool's docs.
+- **Per-user RLS through an agent is *static*, not per-request.** You can attach a
+  `x-ms-query-source-authorization` header to a Foundry IQ knowledge-base MCP tool
+  (works for permission-filtered search indexes, not just SharePoint), but
+  [Agent Service can't vary headers per request](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+  — the token is fixed at agent-definition time and applies to every caller. For
+  per-user Search RLS, use the **Azure OpenAI Responses API** or an
+  **app-mediated retrieve** (Module 3 Track 2).
 - **Roles on the wrong identity** — after publishing, roles on the project identity don't transfer.
 - **Missing role** on the target resource.
 - **Wrong audience** for the downstream service.
+
+## Two ways to realize delegated (OBO) access
+
+| Model | Who exchanges/forwards the user token | Calls the resource | Per-user |
+|-------|----------------------------------------|--------------------|----------|
+| **A · App-mediated** | The app (`Microsoft.Identity.Web` + `Microsoft.Identity.Web.AgentIdentities`, or a forwarded delegated token) | The app | ✅ |
+| **B · Agent-mediated** | Agent Service (OAuth identity passthrough / OBO) | The agent | ✅ Fabric, Work IQ, OAuth MCP/A2A · ⚠️ static-only for Foundry IQ Search |
+
+Model B agent-mediated per-user identity is confirmed for the **Microsoft Fabric
+data agent** and **Work IQ** (OBO token exchange), and for **OAuth-compliant MCP
+servers and A2A endpoints** (consent-link identity passthrough). The **Foundry IQ
+`knowledge_base_retrieve`** tool is the exception — static header only.
 
 ## References
 
@@ -91,3 +110,7 @@ An incorrect audience fails authentication **even when RBAC is correct**.
 - [Elevated-role tasks (publish / reassign)](https://learn.microsoft.com/azure/foundry/concepts/administrator-guide)
 - [Manage hosted agent — retrieve identity](https://learn.microsoft.com/azure/foundry/agents/how-to/manage-hosted-agent)
 - [Agent-to-agent authentication](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-to-agent-authentication)
+- [Connect a Foundry IQ knowledge base to Foundry Agent Service (per-user header limits)](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+- [MCP server authentication — OAuth identity passthrough](https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication)
+- [Agent OAuth flows: On-Behalf-Of](https://learn.microsoft.com/entra/agent-id/agent-on-behalf-of-oauth-flow)
+- [Enforce permissions at query time (per-request user token)](https://learn.microsoft.com/azure/search/agentic-retrieval-how-to-retrieve#enforce-permissions-at-query-time-preview)

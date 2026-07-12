@@ -65,6 +65,24 @@ flowchart LR
     AS -->|unattended: agent identity token| R2[(Storage / Cosmos<br/>agent's own RBAC)]
 ```
 
+> **Where does the user token actually flow?** There are **two** ways to realize
+> the attended/OBO pattern, and they behave differently:
+>
+> | Model | Who exchanges/forwards the user token | Per-user? |
+> |---|---|---|
+> | **A · App-mediated** — the app does the OBO exchange (`Microsoft.Identity.Web` + `Microsoft.Identity.Web.AgentIdentities`) or forwards the user's delegated token and calls the resource itself | Your app | ✅ Yes |
+> | **B · Agent-mediated** — Agent Service forwards the user's identity to the tool | Agent Service | ✅ for **Fabric, Work IQ, OAuth MCP/A2A** tools; ⚠️ **static-only** for Foundry IQ Search RLS |
+>
+> **Which tools support agent-mediated (Model B) per-user identity?** Fabric data
+> agent and Work IQ use OBO passthrough; OAuth-compliant MCP servers and A2A
+> endpoints use OAuth identity passthrough (consent link + stored token). For the
+> **Foundry IQ `knowledge_base_retrieve`** tool, you *can* attach a
+> `x-ms-query-source-authorization` header, but Agent Service
+> [can't vary it per request](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+> — it's one fixed identity for all callers, **not** per-user. For per-user Search
+> RLS, use the **Azure OpenAI Responses API** or the **app-mediated retrieve**
+> (Module 3 Track 2).
+
 ### 12.5 Runtime token exchange (no secrets in code)
 
 When an agent invokes a tool, Agent Service performs a multi-stage OAuth 2.0 exchange automatically — **developers never handle tokens**:
@@ -124,7 +142,7 @@ Use the helper script (assigns *Storage Blob Data Reader* by default — read-on
 1. Ask the agent to read a rate file → succeeds.
 2. Remove the role assignment (`teardown.ps1`) → the same call now fails with 403. This proves the agent has **no** ambient access; every capability is an explicit, auditable grant.
 
-### Part B — Pass the user through (attended / OBO)
+### Part B — Pass the user through (app-mediated delegated access)
 
 Reuse the already-built delegated-RLS web app from Module 3:
 
@@ -132,7 +150,12 @@ Reuse the already-built delegated-RLS web app from Module 3:
 2. Sign in as the **NSW** estimator → only NSW rates. Sign in as **VIC** → only VIC rates.
 3. Same code, same query — only the **identity** differs. The app sets **no** filter; Azure AI Search trims rows from the user's Entra claims passed via `x-ms-query-source-authorization`.
 
-This is the OBO pattern: the app acquires `https://search.azure.com/user_impersonation` for the signed-in user and passes it downstream.
+This is **Model A (app-mediated)**: the app forwards the signed-in user's delegated
+token and calls Search **directly** — Agent Service is *not* in the path, which is
+why per-user trimming works. Agent-mediated per-user identity (Model B) works for
+Fabric / Work IQ / OAuth MCP+A2A tools, but for Foundry IQ Search RLS the agent
+can only carry a **static** header — use the Responses API for per-user through an
+agent.
 
 ### Part C — Inspect a token (optional, 5 min)
 
@@ -164,7 +187,10 @@ It decodes the JWT and classifies it (user vs service/agent vs managed identity)
 
 - Give each **published** agent its **own** identity and re-assign RBAC on publish.
 - Prefer **Entra ID** auth over API keys — keys grant full, unscoped, unauditable access.
-- Use **OBO** when the agent must respect *per-user* permissions; use **app-only** for autonomous work.
+- Use **delegated (OBO)** access for per-user permissions — either **app-mediated**
+  (the app forwards the user token) or **agent-mediated** OAuth passthrough
+  (Fabric, Work IQ, OAuth MCP/A2A). Foundry IQ Search RLS through an agent is
+  **static-only** — per-user needs the Responses API or app-mediated retrieve.
 - Match the **audience** to the target service, and grant the **narrowest** data-plane role.
 
 ---

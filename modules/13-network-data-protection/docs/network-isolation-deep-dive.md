@@ -10,20 +10,32 @@
 
 ## Option A — Custom VNet (BYO), GA
 
-Full control over topology and routing.
+Full control over topology and routing. **This module deploys this path** using the maintained Foundry sample [**Template 15 — Standard Agent Setup with E2E Network Isolation**](https://github.com/microsoft-foundry/foundry-samples/tree/main/infrastructure/infrastructure-setup-bicep/15-private-network-standard-agent-setup) (see [../infra/](../infra/)).
 
 **Requirements**
 - Public Network Access = **Disabled**; private endpoint to the Foundry resource.
 - **Bring Your Own** Storage, AI Search, Cosmos DB (required for VNet injection).
-- Subnet delegated to `Microsoft.App/environments`, size **`/27` or larger**.
+- Subnet delegated to `Microsoft.App/environments` (Template 15 recommends **`/24`** for the agent subnet).
 - Separate private endpoints to Storage, AI Search, Cosmos DB.
 
-**Portal flow**
-1. Create Foundry resource → **Storage** tab → choose **your own** Storage / AI Search / Cosmos DB.
+**What Template 15 provisions**
+- New VNet (`192.168.0.0/16`) with an **agent-subnet** (delegated) and a **pe-subnet**.
+- Network-secured Foundry account (PNA disabled) + project with AAD connections to the BYO resources.
+- Private endpoints + private DNS zones for Foundry, Storage, Cosmos DB, AI Search.
+- **Azure Monitor Private Link Scope (AMPLS)** so hosted agents export telemetry privately.
+- Capability host created implicitly via `networkInjections.scenario='agent'`.
+
+**Related templates**
+- **Template 19** — same as 15 **plus tools** (MCP/OpenAPI/Functions/A2A) behind the VNet.
+- **Template 18** — Managed VNet (no BYO VNet to run). No upgrade path from 15 → 18.
+- **Template 17** — like 15 but with a user-assigned managed identity.
+
+**Portal flow (walking the deployed resources)**
+1. Foundry resource → **Storage** tab → confirm it points at **your** Storage / AI Search / Cosmos DB.
 2. **Networking** → Public access **Disabled**.
-3. Add **Private endpoint** (same region as the VNet).
-4. Set **Virtual Network Injection** → your VNet + delegated subnet.
-5. Create private endpoints to the dependencies on their own resource pages.
+3. **Private endpoint connections** → endpoint in the pe-subnet (sub-resource `account`).
+4. VNet → **agent-subnet** shows delegation to `Microsoft.App/environments`.
+5. Dependency resources each show their own private endpoint + DNS zone.
 
 ## Option B — Managed VNet, Preview
 

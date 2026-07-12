@@ -33,6 +33,10 @@ modules/11-pro-code/src/ContosoEstimator.Web/appsettings.json
 # → appsettings.json and fill in your own values (secret via `dotnet user-secrets`).
 modules/03-agentic-rag/src/track2-identity-rls/appsettings.json
 
+# Module 13 network isolation — local sparse checkout of the official Foundry
+# sample (Template 15). Fetched by infra/deploy.ps1; not committed.
+modules/13-network-data-protection/infra/.template-15/
+
 # Editor and OS artifacts
 .vscode/
 .idea/

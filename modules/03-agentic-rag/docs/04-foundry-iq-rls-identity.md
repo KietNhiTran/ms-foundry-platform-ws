@@ -158,22 +158,36 @@ NSW and VIC users is the identity in the token — Search does the trimming.
 
 ---
 
-## Can this run through a Foundry agent? (No — important)
+## Can this run through a Foundry agent? (Not per-user — important)
 
 The natural question is *"can an NSW estimator just chat a Foundry agent and get
-NSW-only data?"* In the current preview, **no**:
+NSW-only data?"* In the current preview, **not per user**. The nuance matters:
 
-- A Foundry Agent Service agent calls the knowledge base with the **project's
-  managed identity**, not the chatting user's token.
-- [Per-request headers for MCP tools aren't supported](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+- **You *can* attach the header to the agent's tool.** The knowledge-base MCP
+  tool connection accepts an `x-ms-query-source-authorization` header (the same
+  header Track 2 uses), and it applies to permission-filtered **search indexes**,
+  not just SharePoint. So the mechanism is *not* blocked outright.
+- **But the header is static, not per-request.**
+  [Foundry Agent Service doesn't support per-request headers for MCP tools](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
   — *"headers set in agent definitions apply to all invocations and can't vary by
-  user or request"* — so `x-ms-query-source-authorization` can't carry each user's
-  token. Against a permission-filtered index, the agent's identity matches no
-  `group_ids`, so it gets **nothing back**.
+  user or request."* The token is captured **once at agent-definition time** and
+  reused for **every** caller (and it expires ~1 h). So an agent enforces a
+  **single fixed identity's** view, never the signed-in user's.
+
+What that means for our index:
+
+| Token baked into the agent's header | NSW user sees | VIC user sees | Verdict |
+|---|---|---|---|
+| An NSW user's token | NSW rows | **NSW rows** | ❌ not per-user |
+| A service identity in *all* groups | all rows | all rows | ❌ RLS defeated |
+| A service identity in *no* groups | 0 rows | 0 rows | ❌ nothing returns |
+| A distinct **agent per region** (region-scoped identity each) | NSW rows | VIC rows | ⚠️ works, but N agents + token refresh |
 
 > **For per-user authorization, use the Azure OpenAI Responses API** (Microsoft's
-> documented path) or the **app-mediated retrieve** shown here — both inject the
-> user token per request. This Track 2 app is the app-mediated pattern.
+> documented per-user path) or the **app-mediated retrieve** shown here — both
+> pass the user's token **per request**. This Track 2 app is the app-mediated
+> pattern. Without a per-request user token, permission-filtered sources return
+> results **unfiltered** or as the single baked identity — never per user.
 
 ---
 
@@ -196,7 +210,7 @@ NSW-only data?"* In the current preview, **no**:
 | Enforcement | App-side OData filter | Entra token + permission filters |
 | App writes filter? | Yes (from user claims) | No |
 | Identity-native? | No | Yes |
-| Runs through a Foundry agent? | No | No — app-mediated retrieve or Responses API |
+| Runs through a Foundry agent? | No | Static header only — **not per-user** (use Responses API / app-mediated) |
 | Ingestion | SQL auto-indexer (wrapped) | Push model (permission-tagged) |
 
 ---

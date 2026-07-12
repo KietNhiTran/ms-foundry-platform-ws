@@ -97,16 +97,19 @@ conceptual contrast so the trade-off is clear.
 | **Trust boundary** | Your app | Azure AI Search + Entra |
 | **App writes filter logic?** | ✅ Yes (from verified user claims) | ❌ No |
 | **Identity-native?** | ❌ No (app-layer string filter) | ✅ Yes (Entra groups) |
-| **Works through a Foundry agent?** | ❌ No (model would own the filter; no per-user injection) | ❌ Not via Agent Service either — see note below |
+| **Works through a Foundry agent?** | ❌ No (model would own the filter; no per-user injection) | ⚠️ Static header only — **not per-user** (see note) |
 | **Ingestion** | SQL auto-indexer + wrapped `searchIndex` KS | Push model with permission-tagged rows |
 | **Consuming app** | *(none shipped)* | [.NET web + sign-in](../src/track2-identity-rls) |
 
-> **Per-user RLS cannot run through a Foundry Agent Service agent.** The agent
-> calls the knowledge base with the **project's** managed identity, and
-> [per-request headers for MCP tools aren't supported](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect),
-> so the chatting user's token never reaches Search. Identity-native per-user
-> trimming therefore requires an **app that calls retrieve directly** (Track 2)
-> or the **Azure OpenAI Responses API** — both pass the user token per request.
+> **Through a Foundry agent, RLS is *static*, not per-user.** You *can* attach the
+> `x-ms-query-source-authorization` header to the knowledge-base MCP tool
+> connection (it works for permission-filtered search indexes, not just
+> SharePoint). But
+> [Agent Service doesn't support per-request headers](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+> — the token is fixed at agent-definition time and applies to **all** callers, so
+> the agent enforces one identity's view, never the signed-in user's. Genuine
+> **per-user** trimming requires an **app that calls retrieve directly** (Track 2)
+> or the **Azure OpenAI Responses API** — both pass the user token **per request**.
 
 ---
 
@@ -116,13 +119,13 @@ Per-user row filtering **cannot** be demonstrated in the Foundry portal playgrou
 or delegated to a Foundry agent:
 
 - **Playground** runs one fixed agent as *you* — no per-user injection point.
-- **A Foundry agent** calls the knowledge base with the **project managed
-  identity**, not the chatting user's token, and per-request MCP headers aren't
-  supported — so Search can't trim by the user's identity.
+- **A Foundry agent** *can* carry a static `x-ms-query-source-authorization`
+  header, but it's fixed at agent-definition time and can't vary per user, so it
+  enforces one identity's view — not the chatting user's.
 
 The portal playground is still used for the **unfiltered baseline** (everyone sees
 all rates). Per-user enforcement (Track 2) requires an **app that calls retrieve
-directly and forwards the user's token**.
+directly and forwards the user's token** (or the Azure OpenAI Responses API).
 
 ---
 
@@ -144,9 +147,10 @@ cannot run through an agent).
 4. **Track 2** (recommended) enforces access in Azure AI Search via Entra
    permission filters + the user's token. **Track 1** (concept only) would enforce
    it in the app via `filterAddOn` — app-layer, not identity-native, no sample code.
-5. **Per-user RLS cannot run through a Foundry Agent Service agent** (project MI,
-   no per-request token). It needs an app that calls retrieve directly (Track 2)
-   or the Azure OpenAI Responses API.
+5. **A Foundry agent can only do *static* RLS, not per-user.** It can carry a
+   fixed `x-ms-query-source-authorization` header, but not the signed-in user's.
+   Per-user trimming needs an app that calls retrieve directly (Track 2) or the
+   Azure OpenAI Responses API — both pass the user token per request.
 6. The portal playground only shows the unfiltered baseline.
 
 ---

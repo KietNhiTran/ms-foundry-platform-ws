@@ -41,12 +41,14 @@ knowledge source to use it.
    Security depends entirely on the app deriving the right filter from verified
    claims every time. Compare this to Track 2, where Azure AI Search trims rows
    from the user's Entra token and the app writes no filter at all.
-2. **It cannot be delegated to a Foundry agent.** When a Foundry IQ knowledge
-   base is attached to an agent, the LLM generates the `knowledge_base_retrieve`
-   arguments via MCP. Letting the model set the security filter is exactly the
-   trust boundary you must never cross, and **Foundry Agent Service doesn't
-   support per-request headers/params for MCP tools** — so there is no place to
-   inject a per-user filter into the agent's call. (See
+2. **It cannot be delegated to a Foundry agent *per user*.** When a Foundry IQ
+   knowledge base is attached to an agent, the LLM generates the
+   `knowledge_base_retrieve` arguments via MCP. Letting the model set the security
+   filter is exactly the trust boundary you must never cross. And while an agent
+   *can* carry a **static** filter/header on its tool connection,
+   **Foundry Agent Service doesn't support *per-request* headers/params for MCP
+   tools** — so it can enforce one fixed filter for everyone, never a per-user
+   one. (See
    [Connect a Foundry IQ knowledge base to Foundry Agent Service](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect):
    *"headers set in agent definitions apply to all invocations and can't vary by
    user or request… for per-user authorization, use the Azure OpenAI Responses
